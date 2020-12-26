@@ -5,6 +5,7 @@ deezloader
 emoji-country-flag
 Google-Images-Search==1.3.0
 google
+google_trans_new
 glitch-this
 gtts
 humanize
