@@ -11,7 +11,7 @@ import asyncio
 
 import aiohttp
 from userge import Config, Message, get_collection, userge
-from userge.lastfm import pcurl, tglst
+from userge.lastfm import pcurl, tglst, get_response, user
 from userge.utils import rand_array
 
 SAVED_SETTINGS = get_collection("CONFIGS")
@@ -273,21 +273,3 @@ async def lastfm_compat_(message: Message):
     disart = ", ".join(disartlst)
     rep = f"{display} both listen to __{disart}__...\nMusic Compatibility is **{compat}%**"
     await message.edit(rep, disable_web_page_preview=True)
-
-
-async def get_response(params: dict):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(API, params=params) as resp:
-            status_code = resp.status
-            json_ = await resp.json()
-        await session.close()
-    return status_code, json_
-
-
-async def user():
-    data = await SAVED_SETTINGS.find_one({"_id": "SHOW_LASTFM"})
-    user_ = await userge.get_me()
-    if data and data["on"] == "Show":
-        return f"[{user_.first_name}]({du}{Config.LASTFM_USERNAME})"
-    else:
-        return f"{user_.first_name}"
