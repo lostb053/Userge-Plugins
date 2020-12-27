@@ -9,6 +9,7 @@
 
 import asyncio
 
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from userge import Config, Message, get_collection, userge
 from userge.lastfm import get_response, pcurl, tglst, user
 from userge.utils import rand_array
@@ -95,6 +96,13 @@ async def last_fm_pic_(message: Message):
         [z.append(k.lower()) for k in y if k in tglst() and k not in z]
         neutags = " #".join(z[i] for i in range(min(len(z), 4)))
         rep += "" if neutags == "" else f"\n#{neutags}"
+        yt = "+".join((artist_name.replace(" ", "+"), song_name.replace(" ", "+")))
+        sp = "%20".join((artist_name.replace(" ", "%20"), song_name.replace(" ", "%20")))
+        b = [[
+            InlineKeyboardButton(text="YouTube", url=f"https://www.youtube.com/results?search_query={yt}"),
+            InlineKeyboardButton(text="Spotify", url=f"https://open.spotify.com/search/results/{sp}")
+        ]]
+        await message.edit(rep, reply_markup=InlineKeyboardMarkup(b))
     else:
         rep = f"**{querydisplay}** was listening to ...\n"
         playcount = view_data.get("recenttracks").get("@attr").get("total")
@@ -104,7 +112,7 @@ async def last_fm_pic_(message: Message):
             rep += f"\n🎧  {artist_name} - {song_name}"
             rep += ", ♥️" if song_["loved"] != "0" else ""
         rep += f"`\n\nTotal Scrobbles = {playcount}`"
-    await message.edit(rep)
+        await message.edit(rep)
 
 
 @userge.on_cmd(
