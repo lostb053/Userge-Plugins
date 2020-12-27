@@ -9,9 +9,8 @@
 
 import asyncio
 
-import aiohttp
 from userge import Config, Message, get_collection, userge
-from userge.lastfm import pcurl, tglst, get_response, user
+from userge.lastfm import get_response, pcurl, tglst, user
 from userge.utils import rand_array
 
 SAVED_SETTINGS = get_collection("CONFIGS")
