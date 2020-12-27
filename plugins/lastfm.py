@@ -8,13 +8,10 @@
 # Code re-written by @DeletedUser420 (telegram), github user as code-rgb
 
 import asyncio
-
 from userge import Config, Message, get_collection, userge
 from userge.lastfm import get_response, pcurl, tglst, user
 from userge.utils import rand_array
 
-SAVED_SETTINGS = get_collection("CONFIGS")
-API = "http://ws.audioscrobbler.com/2.0"
 du = "https://last.fm/user/"
 
 
@@ -33,7 +30,7 @@ async def toggle_lastfm_profile_(message: Message):
     in_ = message.input_str
     tgl = "Show" if in_ == "on" else "Hide" if in_ == "off" else ""
     await asyncio.gather(
-        SAVED_SETTINGS.update_one(
+        get_collection("CONFIGS").update_one(
             {"_id": "SHOW_LASTFM"},
             {"$set": {"on": tgl}},
             upsert=True,
