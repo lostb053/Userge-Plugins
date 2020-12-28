@@ -99,11 +99,20 @@ async def last_fm_pic_(message: Message):
         if neutags != "":
             rep += f"\n#{neutags}"
         yt = "+".join((artist_name.replace(" ", "+"), song_name.replace(" ", "+")))
-        sp = "%20".join((artist_name.replace(" ", "%20"), song_name.replace(" ", "%20")))
-        b = [[
-            InlineKeyboardButton(text="🎼YouTube", url=f"https://www.youtube.com/results?search_query={yt}"),
-            InlineKeyboardButton(text="🎶Spotify", url=f"https://open.spotify.com/search/results/{sp}")
-        ]]
+        sp = "%20".join(
+            (artist_name.replace(" ", "%20"), song_name.replace(" ", "%20"))
+        )
+        b = [
+            [
+                InlineKeyboardButton(
+                    text="🎼YouTube",
+                    url=f"https://www.youtube.com/results?search_query={yt}",
+                ),
+                InlineKeyboardButton(
+                    text="🎶Spotify", url=f"https://open.spotify.com/search/results/{sp}"
+                ),
+            ]
+        ]
         await message.edit(rep, reply_markup=InlineKeyboardMarkup(b))
     else:
         rep = f"**{querydisplay}** was listening to ...\n"
