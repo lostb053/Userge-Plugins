@@ -96,18 +96,17 @@ async def last_fm_pic_(message: Message):
         [z.append(k.lower()) for k in y if k in tglst() and k not in z]
         neutags = " #".join(z[i] for i in range(min(len(z), 4)))
         rep += "" if neutags == "" else f"\n#{neutags}"
-        yt = "+".join((artist_name.replace(" ", "+"), song_name.replace(" ", "+")))
-        sp = "%20".join(
+        qry = "%20".join(
             (artist_name.replace(" ", "%20"), song_name.replace(" ", "%20"))
         )
         b = [
             [
                 InlineKeyboardButton(
                     text="YouTube",
-                    url=f"https://www.youtube.com/results?search_query={yt}",
+                    url=f"https://www.youtube.com/results?search_query={qry}",
                 ),
                 InlineKeyboardButton(
-                    text="Spotify", url=f"https://open.spotify.com/search/results/{sp}"
+                    text="Spotify", url=f"https://open.spotify.com/search/results/{qry}"
                 ),
             ]
         ]
