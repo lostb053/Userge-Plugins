@@ -77,7 +77,8 @@ async def last_fm_pic_(message: Message):
         song_name = song_["name"]
         artist_name = song_["artist"]["name"]
         rep += f"🎧  <code>{artist_name} - {song_name}</code>"
-        rep += ", ♥️" if song_["loved"] != "0" else ""
+        if song_["loved"] != "0":
+            rep += ", ♥️"
         gt = (
             (
                 await get_response(
@@ -95,21 +96,14 @@ async def last_fm_pic_(message: Message):
         z = []
         [z.append(k.lower()) for k in y if k in tglst() and k not in z]
         neutags = " #".join(z[i] for i in range(min(len(z), 4)))
-        rep += "" if neutags == "" else f"\n#{neutags}"
-        qry = "%20".join(
-            (artist_name.replace(" ", "%20"), song_name.replace(" ", "%20"))
-        )
-        b = [
-            [
-                InlineKeyboardButton(
-                    text="YouTube",
-                    url=f"https://www.youtube.com/results?search_query={qry}",
-                ),
-                InlineKeyboardButton(
-                    text="Spotify", url=f"https://open.spotify.com/search/results/{qry}"
-                ),
-            ]
-        ]
+        if neutags != "":
+            rep += f"\n#{neutags}"
+        yt = "+".join((artist_name.replace(" ", "+"), song_name.replace(" ", "+")))
+        sp = "%20".join((artist_name.replace(" ", "%20"), song_name.replace(" ", "%20")))
+        b = [[
+            InlineKeyboardButton(text="🎼YouTube", url=f"https://www.youtube.com/results?search_query={yt}"),
+            InlineKeyboardButton(text="🎶Spotify", url=f"https://open.spotify.com/search/results/{sp}")
+        ]]
         await message.edit(rep, reply_markup=InlineKeyboardMarkup(b))
     else:
         rep = f"**{querydisplay}** was listening to ...\n"
@@ -118,7 +112,8 @@ async def last_fm_pic_(message: Message):
             song_name = song_["name"]
             artist_name = song_["artist"]["name"]
             rep += f"\n🎧  {artist_name} - {song_name}"
-            rep += ", ♥️" if song_["loved"] != "0" else ""
+            if song_["loved"] != "0":
+                rep += ", ♥️"
         rep += f"`\n\nTotal Scrobbles = {playcount}`"
         await message.edit(rep)
 
@@ -141,14 +136,17 @@ async def last_fm_user_info_(message: Message):
     }
     lastuser = (await get_response(params))[1]["user"]
     lastimg = lastuser.get("image")[3].get("#text")
-    result = f"[\u200c]({lastimg})" if lastimg else ""
+    if lastimg:
+        result = f"[\u200c]({lastimg})"
     querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
     result += f"LastFM User Info for **{querydisplay}**:\n**User:** {query}\n"
     name = lastuser.get("realname")
-    result += "" if name == "" else f" 🔰 **Name:** {name}\n"
+    if name != "":
+        result += f" 🔰 **Name:** {name}\n"
     result += f" 🎵 **Total Scrobbles:** {lastuser['playcount']}\n"
     country = lastuser.get("country")
-    result += "" if country == "None" else f" 🌍 **Country:** {country}\n"
+    if country != "None":
+        result += f" 🌍 **Country:** {country}\n"
     await message.edit(result)
 
 
@@ -159,7 +157,7 @@ async def last_fm_user_info_(message: Message):
         "usage": "{tr}pc [lastfm username] (optional)",
     },
 )
-async def last_fm_user_info_(message: Message):
+async def last_fm_pc_(message: Message):
     """Shows Playcount"""
     query = message.input_str or Config.LASTFM_USERNAME
     params = {
@@ -230,7 +228,8 @@ async def last_fm_played_(message: Message):
         song_name = song_["name"]
         artist_name = song_["artist"]["name"]
         rep += f"\n🎧  {artist_name} - {song_name}"
-        rep += " (♥️)" if song_["loved"] != "0" else ""
+        if song_["loved"] != "0":
+            rep += ", ♥️"
     await message.edit(rep, disable_web_page_preview=True)
 
 
