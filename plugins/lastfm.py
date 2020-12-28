@@ -157,7 +157,7 @@ async def last_fm_user_info_(message: Message):
         "usage": "{tr}pc [lastfm username] (optional)",
     },
 )
-async def last_fm_pc_(message: Message):
+async def last_pc_(message: Message):
     """Shows Playcount"""
     query = message.input_str or Config.LASTFM_USERNAME
     params = {
