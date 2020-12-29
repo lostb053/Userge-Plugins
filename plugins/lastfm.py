@@ -145,8 +145,9 @@ async def last_fm_user_info_(message: Message):
     }
     lastuser = (await get_response(params))[1]["user"]
     lastimg = lastuser.get("image")[3].get("#text")
+    result = ""
     if lastimg:
-        result = f"[\u200c]({lastimg})"
+        result += f"[\u200c]({lastimg})"
     querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
     result += f"LastFM User Info for **{querydisplay}**:\n**User:** {query}\n"
     name = lastuser.get("realname")
