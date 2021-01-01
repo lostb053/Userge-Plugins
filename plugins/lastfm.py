@@ -9,7 +9,7 @@
 
 import asyncio
 
-from pyrogram.types import InlineKeyboardButton
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from userge import Config, Message, get_collection, userge
 from userge.lastfm import get_response, pcurl, tglst, user
 from userge.utils import rand_array
@@ -64,8 +64,6 @@ async def last_fm_pic_(message: Message):
     if len(recent_song) == 0:
         return await message.err("No Recent Tracks found", del_in=5)
     querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
-    yt = "https://www.youtube.com/results?search_query="
-    sp = "https://open.spotify.com/search/"
     if recent_song[0].get("@attr"):
         img = recent_song[0].get("image")[3].get("#text")
         if img in [
@@ -101,15 +99,16 @@ async def last_fm_pic_(message: Message):
         if neutags != "":
             rep += f"\n#{neutags}"
         qry = (artist_name.replace(" ", "%20"), song_name.replace(" ", "%20"))
-        b = [
-            [
+        b = [[
                 InlineKeyboardButton(
                     text="🎼YouTube",
-                    url=f"{yt}{qry}",
+                    url=f"https://www.youtube.com/results?search_query={qry}",
                 ),
-                InlineKeyboardButton(text="🎶Spotify", url=f"{sp}{qry}"),
-            ]
-        ]
+                InlineKeyboardButton(
+                    text="🎶Spotify", url=f"https://open.spotify.com/search/{qry}"
+                ),
+        ]]
+        await message.edit(rep, reply_markup=InlineKeyboardMarkup(b))
     else:
         rep = f"**{querydisplay}** was listening to ...\n"
         playcount = view_data.get("recenttracks").get("@attr").get("total")
@@ -119,20 +118,8 @@ async def last_fm_pic_(message: Message):
             rep += f"\n🎧  {artist_name} - {song_name}"
             if song_["loved"] != "0":
                 rep += ", ♥️"
-            qry = (artist_name.replace(" ", "%20"), song_name.replace(" ", "%20"))
-            b = [
-                [
-                    InlineKeyboardButton(
-                        text="🎼YouTube",
-                        url=f"{yt}{qry}",
-                    ),
-                    InlineKeyboardButton(text="🎶Spotify", url=f"{sp}{qry}"),
-                ]
-            ]
         rep += f"`\n\nTotal Scrobbles = {playcount}`"
-
-
-await message.edit(rep, reply_markup=InlineKeyboardMarkup(b))
+        await message.edit(rep)
 
 
 @userge.on_cmd(
