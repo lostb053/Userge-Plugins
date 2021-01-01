@@ -99,7 +99,8 @@ async def last_fm_pic_(message: Message):
         if neutags != "":
             rep += f"\n#{neutags}"
         qry = (artist_name.replace(" ", "%20"), song_name.replace(" ", "%20"))
-        b = [[
+        b = [
+            [
                 InlineKeyboardButton(
                     text="🎼YouTube",
                     url=f"https://www.youtube.com/results?search_query={qry}",
@@ -107,7 +108,8 @@ async def last_fm_pic_(message: Message):
                 InlineKeyboardButton(
                     text="🎶Spotify", url=f"https://open.spotify.com/search/{qry}"
                 ),
-        ]]
+            ]
+        ]
         await message.edit(rep, reply_markup=InlineKeyboardMarkup(b))
     else:
         rep = f"**{querydisplay}** was listening to ...\n"
