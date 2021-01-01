@@ -98,7 +98,7 @@ async def last_fm_pic_(message: Message):
         neutags = " #".join(z[i] for i in range(min(len(z), 4)))
         if neutags != "":
             rep += f"\n#{neutags}"
-        qry = (artist_name.replace(" ", "%20"), song_name.replace(" ", "%20"))
+        qry = "%20".join((artist_name.replace(" ", "%20"), song_name.replace(" ", "%20")))
         b = [
             [
                 InlineKeyboardButton(
