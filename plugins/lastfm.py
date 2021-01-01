@@ -9,7 +9,7 @@
 
 import asyncio
 
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardButton
 from userge import Config, Message, get_collection, userge
 from userge.lastfm import get_response, pcurl, tglst, user
 from userge.utils import rand_array
@@ -107,9 +107,7 @@ async def last_fm_pic_(message: Message):
                     text="🎼YouTube",
                     url=f"{yt}{qry}",
                 ),
-                InlineKeyboardButton(
-                    text="🎶Spotify", url=f"{sp}{qry}"
-                ),
+                InlineKeyboardButton(text="🎶Spotify", url=f"{sp}{qry}"),
             ]
         ]
     else:
@@ -128,12 +126,12 @@ async def last_fm_pic_(message: Message):
                         text="🎼YouTube",
                         url=f"{yt}{qry}",
                     ),
-                    InlineKeyboardButton(
-                        text="🎶Spotify", url=f"{sp}{qry}"
-                    ),
+                    InlineKeyboardButton(text="🎶Spotify", url=f"{sp}{qry}"),
                 ]
             ]
         rep += f"`\n\nTotal Scrobbles = {playcount}`"
+
+
 await message.edit(rep, reply_markup=InlineKeyboardMarkup(b))
 
 
