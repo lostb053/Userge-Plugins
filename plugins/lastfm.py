@@ -1,63 +1,85 @@
 """Last FM"""
 
-# Copyright (C) 2020 BY USERGE-X
+# Copyright (C) 2020 BY USERGE-X.
 # All rights reserved.
-#
-# Authors: 1. https://github.com/lostb053 [TG: @Lostb053]
-#          2. https://github.com/code-rgb [TG: @DeletedUser420]
-#
-# API: https://www.last.fm/api
+# Inspiration from @lastfmrobot <mainly> (owned by @dangou on telegram) and...
+# @TheRealPhoenixBot(owned by @TheRealPhoenix on telegram and...
+# github user as rsktg)
+# Code re-written by @DeletedUser420 (telegram), github user as code-rgb
 
+import asyncio
 
-import aiohttp
-from userge import Config, Message, userge
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from userge import Config, Message, get_collection, userge
+from userge.lastfm import get_response, pcurl, tglst, user
 from userge.utils import rand_array
 
-API = "http://ws.audioscrobbler.com/2.0"
-
-# In Case Song Does't have any Album Art.
-PIC_URL = [
-    "https://i.imgur.com/l772pcA.png",
-    "https://i.imgur.com/KehK98D.png",
-    "https://i.imgur.com/LuwSKeO.png",
-    "https://i.imgur.com/EZ1S9cJ.png",
-]
+du = "https://last.fm/user/"
 
 
-if hasattr(Config, "LASTFM_API_KEY") and (
-    Config.LASTFM_API_KEY and Config.LASTFM_USERNAME
-):
-
-    @userge.on_cmd(
-        "lastfm",
-        about={"header": "Get Lastfm now playing pic"},
+@userge.on_cmd(
+    "toggleprofile",
+    about={
+        "header": "Toggle LastFM Profile",
+        "description": "toggle lastfm profile to be shown or hidden",
+        "usage": "{tr}toggleprofile on/off",
+    },
+)
+async def toggle_lastfm_profile_(message: Message):
+    """Toggle LastFM Profile"""
+    if not message.input_str:
+        return await message.edit("Please check `{tr}help toggleprofile`", del_in=5)
+    in_ = message.input_str
+    tgl = "Show" if in_ == "on" else "Hide" if in_ == "off" else ""
+    await asyncio.gather(
+        get_collection("CONFIGS").update_one(
+            {"_id": "SHOW_LASTFM"},
+            {"$set": {"on": tgl}},
+            upsert=True,
+        ),
     )
-    async def last_fm_pic_(message: Message):
-        """now playing"""
-        await message.edit("<code>Getting info from last.fm ...</code>")
-        params = {
-            "method": "user.getrecenttracks",
-            "limit": 1,
-            "extended": 1,
-            "user": Config.LASTFM_USERNAME,
-            "api_key": Config.LASTFM_API_KEY,
-            "format": "json",
-        }
-        view_data = (await get_response(params))[1]
-        if "error" in view_data:
-            return await message.err(view_data["error"], del_in=5)
-        recent_song = view_data["recenttracks"]["track"]
-        if len(recent_song) == 0:
-            return await message.err("No Recent Tracks found", del_in=5)
-        rep = f"<b><a href=https://www.last.fm/user/{Config.LASTFM_USERNAME}>{Config.LASTFM_USERNAME}</a></b> is currently listening to:\n"
+    await message.edit("`Settings updated`", del_in=5)
+
+
+@userge.on_cmd(
+    "lp",
+    about={
+        "header": "Get Lastfm now playing pic",
+        "usage": "{tr}lp [lastfm username] (optional)",
+    },
+)
+async def last_fm_pic_(message: Message):
+    """Currently Playing"""
+    query = message.input_str or Config.LASTFM_USERNAME
+    params = {
+        "method": "user.getrecenttracks",
+        "user": query,
+        "limit": 3,
+        "extended": 1,
+        "api_key": Config.LASTFM_API_KEY,
+        "format": "json",
+    }
+    view_data = (await get_response(params))[1]
+    recent_song = view_data["recenttracks"]["track"]
+    if len(recent_song) == 0:
+        return await message.err("No Recent Tracks found", del_in=5)
+    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
+    if recent_song[0].get("@attr"):
+        img = recent_song[0].get("image")[3].get("#text")
+        if img in [
+            "https:\/\/lastfm.freetls.fastly.net\/i\/u\/300x300\/2a96cbd8b46e442fc41c2b86b821562f.png",
+            "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png",
+            "",
+        ]:
+            img = rand_array(pcurl())
+        rep = f"[\u200c]({img})**{querydisplay}** is currently listening to:\n"
         song_ = recent_song[0]
         song_name = song_["name"]
         artist_name = song_["artist"]["name"]
-        rep += f"🎧  <b><a href={song_['url']}>{song_name}</a></b> - <a href={song_['artist']['url']}>{artist_name}</a>"
+        rep += f"🎧  <code>{artist_name} - {song_name}</code>"
         if song_["loved"] != "0":
-            rep += " (♥️, loved)"
-        # Trying to Fetch Album of the track
-        get_track = (
+            rep += ", ♥️"
+        gt = (
             (
                 await get_response(
                     {
@@ -69,143 +91,206 @@ if hasattr(Config, "LASTFM_API_KEY") and (
                     }
                 )
             )[1]
-        )["track"]
-        img = (
-            (get_track["album"]["image"].pop())["#text"]
-            if get_track.get("album")
-            else rand_array(PIC_URL)
+        )["track"]["toptags"]["tag"]
+        y = [i.replace(" ", "_").replace("-", "_") for i in [tg["name"] for tg in gt]]
+        z = []
+        [z.append(k.lower()) for k in y if k in tglst() and k not in z]
+        neutags = " #".join(z[i] for i in range(min(len(z), 4)))
+        if neutags != "":
+            rep += f"\n#{neutags}"
+        qry = "%20".join(
+            (artist_name.replace(" ", "%20"), song_name.replace(" ", "%20"))
         )
-        get_tags = "\n"
-        # tags of the given track
-        for tags in get_track["toptags"]["tag"]:
-            get_tags += f"<a href={tags['url']}>#{tags['name']}</a>  "
-        await message.edit(
-            f"<a href={img}>\u200c</a>" + rep + get_tags, parse_mode="html"
-        )
-
-    @userge.on_cmd(
-        "lastuser",
-        about={
-            "header": "Get Lastfm user info",
-            "usage": "{tr}lastuser [lastfm username] (optional)",
-        },
-    )
-    async def last_fm_user_info_(message: Message):
-        """user info"""
-        lfmuser = message.input_str or Config.LASTFM_USERNAME
-        await message.edit(
-            f"<code>Getting info about last.fm User: {lfmuser}</code> ..."
-        )
-        params = {
-            "method": "user.getInfo",
-            "user": lfmuser,
-            "api_key": Config.LASTFM_API_KEY,
-            "format": "json",
-        }
-        view_data = (await get_response(params))[1]
-        if "error" in view_data:
-            return await message.err(view_data["error"], del_in=5)
-        lastuser = view_data["user"]
-        if lastuser["gender"] == "m":
-            gender = "🙎‍♂️ "
-        elif lastuser["gender"] == "f":
-            gender = "🙍‍♀️ "
-        else:
-            gender = "👤 "
-        lastimg = lastuser["image"].pop() if len(lastuser["image"]) != 0 else None
-        age = lastuser["age"]
-        playlist = lastuser["playlists"]
-        subscriber = lastuser["subscriber"]
-        result = ""
-        if lastimg:
-            result += f"<a href={lastimg['#text']}>\u200c</a>"
-        result += (
-            f"<b>LastFM User Info for <a href={lastuser['url']}>{lfmuser}</a></b>:\n"
-        )
-        result += f" {gender}<b>Name:</b> {lastuser['realname']}\n"
-        if age != "0":
-            result += f" 🎂 <b>Age:</b> {age}\n"
-        result += f" 🎵 <b>Total Scrobbles:</b> {lastuser['playcount']}\n"
-        result += f" 🌍 <b>Country:</b> {lastuser['country']}\n"
-        if playlist != "0":
-            result += f" ▶️ <b>Playlists:</b> {playlist}\n"
-        if subscriber != "0":
-            result += f" ⭐️ <b>Subscriber:</b> {subscriber}"
-        await message.edit(result, parse_mode="html")
-
-    @userge.on_cmd(
-        "lastlove",
-        about={
-            "header": "Get Lastfm Loved Tracks",
-            "usage": "{tr}lastlove [lastfm username] (optional)",
-        },
-    )
-    async def last_fm_loved_tracks_(message: Message):
-        """liked songs"""
-        user_ = message.input_str or Config.LASTFM_USERNAME
-        await message.edit(f"♥️<code> Fetching favourite tracks of {user_} ...</code>")
-        params = {
-            "method": "user.getlovedtracks",
-            "limit": 30,
-            "page": 1,
-            "user": user_,
-            "api_key": Config.LASTFM_API_KEY,
-            "format": "json",
-        }
-        view_data = (await get_response(params))[1]
-        tracks = view_data["lovedtracks"]["track"]
-        if "error" in view_data:
-            return await message.err(view_data["error"], del_in=5)
-        if len(tracks) == 0:
-            return await message.edit("You Don't have any Loved tracks yet.")
-
-        rep = f"♥️ <b>Favourite Tracks of <a href=https://www.last.fm/user/{user_}>{user_}'s</a></b>"
-        for count, song_ in enumerate(tracks, start=1):
+        b = [
+            [
+                InlineKeyboardButton(
+                    text="🎼YouTube",
+                    url=f"https://www.youtube.com/results?search_query={qry}",
+                ),
+                InlineKeyboardButton(
+                    text="🎶Spotify", url=f"https://open.spotify.com/search/{qry}"
+                ),
+            ]
+        ]
+        await message.edit(rep, reply_markup=InlineKeyboardMarkup(b))
+    else:
+        rep = f"**{querydisplay}** was listening to ...\n"
+        playcount = view_data.get("recenttracks").get("@attr").get("total")
+        for song_ in recent_song:
             song_name = song_["name"]
             artist_name = song_["artist"]["name"]
-            rep += f"\n{count:02d}. 🎧  <b><a href={song_['url']}>{song_name}</a></b> - <a href={song_['artist']['url']}>{artist_name}</a>"
-        await message.edit(rep, disable_web_page_preview=True, parse_mode="html")
-
-    @userge.on_cmd(
-        "lastplayed",
-        about={
-            "header": "Get recently played LastFm Songs",
-            "usage": "{tr}lastplayed [lastFM username] (optional)",
-        },
-    )
-    async def last_fm_played_(message: Message):
-        """recently played songs"""
-        await message.edit(
-            "<code> 🎵 Fetching recently played songs from last.fm ...</code>"
-        )
-        user_ = message.input_str or Config.LASTFM_USERNAME
-        params = {
-            "method": "user.getrecenttracks",
-            "limit": 30,
-            "extended": 1,
-            "user": user_,
-            "api_key": Config.LASTFM_API_KEY,
-            "format": "json",
-        }
-        view_data = (await get_response(params))[1]
-        if "error" in view_data:
-            return await message.err(view_data["error"], del_in=5)
-        recent_song = view_data["recenttracks"]["track"]
-        if len(recent_song) == 0:
-            return await message.err("No Recent Tracks found", del_in=5)
-        rep = f"<b><a href=https://www.last.fm/user/{user_}>{user_}'s</a></b> recently played songs:"
-        for count, song_ in enumerate(recent_song, start=1):
-            song_name = song_["name"]
-            artist_name = song_["artist"]["name"]
-            rep += f"\n{count:02d}. 🎧  <b><a href={song_['url']}>{song_name}</a></b> - <a href={song_['artist']['url']}>{artist_name}</a>"
+            rep += f"\n🎧  {artist_name} - {song_name}"
             if song_["loved"] != "0":
-                rep += " ♥️"
-        await message.edit(rep, disable_web_page_preview=True, parse_mode="html")
+                rep += ", ♥️"
+        rep += f"`\n\nTotal Scrobbles = {playcount}`"
+        await message.edit(rep)
 
-    async def get_response(params: dict):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(API, params=params) as resp:
-                status_code = resp.status
-                json_ = await resp.json()
-            await session.close()
-        return status_code, json_
+
+@userge.on_cmd(
+    "linfo",
+    about={
+        "header": "Get Lastfm user info",
+        "usage": "{tr}linfo [lastfm username] (optional)",
+    },
+)
+async def last_fm_user_info_(message: Message):
+    """Shows User Info"""
+    query = message.input_str or Config.LASTFM_USERNAME
+    params = {
+        "method": "user.getInfo",
+        "user": query,
+        "api_key": Config.LASTFM_API_KEY,
+        "format": "json",
+    }
+    lastuser = (await get_response(params))[1]["user"]
+    lastimg = lastuser.get("image")[3].get("#text")
+    result = ""
+    if lastimg:
+        result += f"[\u200c]({lastimg})"
+    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
+    result += f"LastFM User Info for **{querydisplay}**:\n**User:** {query}\n"
+    name = lastuser.get("realname")
+    if name != "":
+        result += f" 🔰 **Name:** {name}\n"
+    result += f" 🎵 **Total Scrobbles:** {lastuser['playcount']}\n"
+    country = lastuser.get("country")
+    if country != "None":
+        result += f" 🌍 **Country:** {country}\n"
+    await message.edit(result)
+
+
+@userge.on_cmd(
+    "pc",
+    about={
+        "header": "Get Lastfm user playcount",
+        "usage": "{tr}pc [lastfm username] (optional)",
+    },
+)
+async def last_pc_(message: Message):
+    """Shows Playcount"""
+    query = message.input_str or Config.LASTFM_USERNAME
+    params = {
+        "method": "user.getInfo",
+        "user": query,
+        "api_key": Config.LASTFM_API_KEY,
+        "format": "json",
+    }
+    lastuser = (await get_response(params))[1]["user"]
+    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
+    result = f"**{querydisplay}'s** playcount is:\n{lastuser['playcount']}"
+    await message.edit(result, disable_web_page_preview=True)
+
+
+@userge.on_cmd(
+    "loved",
+    about={
+        "header": "Get Lastfm Loved Tracks",
+        "usage": "{tr}loved [lastfm username] (optional)",
+    },
+)
+async def last_fm_loved_tracks_(message: Message):
+    """Shows Liked Songs"""
+    query = message.input_str or Config.LASTFM_USERNAME
+    params = {
+        "method": "user.getlovedtracks",
+        "limit": 20,
+        "user": query,
+        "api_key": Config.LASTFM_API_KEY,
+        "format": "json",
+    }
+    tracks = (await get_response(params))[1]["lovedtracks"]["track"]
+    if len(tracks) == 0:
+        return await message.edit("You Don't have any Loved tracks yet.")
+    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
+    rep = f"**Favourite (♥️) Tracks for {querydisplay}**"
+    for song_ in tracks:
+        song_name = song_["name"]
+        artist_name = song_["artist"]["name"]
+        rep += f"\n🎧  **{artist_name}** - {song_name}"
+    await message.edit(rep, disable_web_page_preview=True)
+
+
+@userge.on_cmd(
+    "hp",
+    about={
+        "header": "Get Upto 20 recently played LastFm Songs",
+        "usage": "{tr}hp [lastFM username] (optional)",
+    },
+)
+async def last_fm_played_(message: Message):
+    """Shows Recently Played Songs"""
+    query = message.input_str or Config.LASTFM_USERNAME
+    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
+    params = {
+        "method": "user.getrecenttracks",
+        "limit": 20,
+        "extended": 1,
+        "user": query,
+        "api_key": Config.LASTFM_API_KEY,
+        "format": "json",
+    }
+    recent_song = (await get_response(params))[1]["recenttracks"]["track"]
+    if len(recent_song) == 0:
+        return await message.err("No Recent Tracks found", del_in=5)
+    rep = f"**{querydisplay}** recently played 🎵 songs:\n"
+    for song_ in recent_song:
+        song_name = song_["name"]
+        artist_name = song_["artist"]["name"]
+        rep += f"\n🎧  {artist_name} - {song_name}"
+        if song_["loved"] != "0":
+            rep += ", ♥️"
+    await message.edit(rep, disable_web_page_preview=True)
+
+
+# The following code won't return actual compatibility as available on site
+# but is basically similar to @lastfmrobot's compat cmd
+@userge.on_cmd(
+    "compat",
+    about={
+        "header": "Compat",
+        "description": "check music compat level with other lastfm users",
+        "usage": """{tr}compat lastfmusername
+        or
+        {tr}compat lastfmusername1|lastfmusername2
+        """,
+    },
+)
+async def lastfm_compat_(message: Message):
+    """Shows Music Compatibility"""
+    if "|" in message.input_str:
+        us1, us2 = message.input_str.split("|")
+        display = f"**[{us1}]({du}{us1})** and **[{us2}]({du}{us2})**"
+    elif message.input_str:
+        us1, us2 = Config.LASTFM_USERNAME, message.input_str
+        display = f"**{await user()}** and **[{us2}]({du}{us2})**"
+    else:
+        return await message.edit("Please check `{tr}help Compat`")
+    ta1 = (
+        await get_response(
+            {
+                "method": "user.getTopArtists",
+                "user": us1,
+                "limit": 500,
+                "api_key": Config.LASTFM_API_KEY,
+                "format": "json",
+            }
+        )
+    )[1]["topartists"]["artist"]
+    ta2 = (
+        await get_response(
+            {
+                "method": "user.getTopArtists",
+                "user": us2,
+                "limit": 500,
+                "api_key": Config.LASTFM_API_KEY,
+                "format": "json",
+            }
+        )
+    )[1]["topartists"]["artist"]
+    ad1, ad2 = [n["name"] for n in ta1], [n["name"] for n in ta2]
+    comart = [value for value in ad2 if value in ad1]
+    compat = min((len(comart) * 100 / 40), 100)
+    disartlst = {comart[r] for r in range(min(len(comart), 5))}
+    disart = ", ".join(disartlst)
+    rep = f"{display} both listen to __{disart}__...\nMusic Compatibility is **{compat}%**"
+    await message.edit(rep, disable_web_page_preview=True)
