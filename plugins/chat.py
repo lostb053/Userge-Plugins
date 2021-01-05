@@ -69,7 +69,6 @@ async def leave_chat(message: Message):
     input_str = message.input_str
     text = input_str or message.chat.id
     try:
-        await userge.send_message(text, "```Good bye, Cruel World... :-) ```")
         await userge.leave_chat(text)
     except UsernameNotOccupied:
         await message.edit(
