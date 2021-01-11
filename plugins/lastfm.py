@@ -104,7 +104,7 @@ async def last_fm_pic_(message: Message):
         b = [
             [
                 InlineKeyboardButton(
-                    text="🎼YouTubesssss",
+                    text="🎼YouTube",
                     url=f"https://www.youtube.com/results?search_query={qry}",
                 ),
                 InlineKeyboardButton(
