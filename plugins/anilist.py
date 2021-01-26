@@ -22,7 +22,9 @@ from userge.utils import xbot
 CLOG = userge.getCLogger(__name__)
 
 # Default templates for Query Formatting
-ANIME_TEMPLATE = """[{c_flag}]**{romaji}**
+ANIME_TEMPLATE = """[{c_flag}]**{romaji}**\n
+    __{english}__\n
+    {native}
 
 **ID | MAL ID:** `{idm}` | `{idmal}`
 ➤ **SOURCE:** `{source}`
@@ -30,8 +32,10 @@ ANIME_TEMPLATE = """[{c_flag}]**{romaji}**
 ➤ **GENRES:** `{genre}`
 ➤ **SEASON:** `{season}`
 ➤ **EPISODES:** `{episodes}`
+➤ **DURATION:** `{duration}`
+➤ **CHARACTERS:** `{chrctrs}`
 ➤ **STATUS:** `{status}`
-➤ **NEXT AIRING:** `{air_on}`
+➤ **NEXT AIRING:** `{air_on} | {air_ep}`
 ➤ **SCORE:** `{score}%` 🌟
 ➤ **ADULT RATED:** `{adult}`
 🎬 {trailer_link}
@@ -256,6 +260,11 @@ async def anim_arch(message: Message):
     coverImg = data.get("coverImage")["extraLarge"]
     bannerImg = data.get("bannerImage")
     genres = data.get("genres")
+    for char in data["characters"]["nodes"]:
+        charlist = []
+        charlist.append(f"    {char['name']['full']}")
+    chrctrs = "\n"
+    chrctrs += ("\n").join(charlist[:7])
     genre = genres[0]
     if len(genres) != 1:
         genre = ", ".join(genres)
@@ -263,6 +272,7 @@ async def anim_arch(message: Message):
     air_on = None
     if data["nextAiringEpisode"]:
         nextAir = data["nextAiringEpisode"]["airingAt"]
+        air_ep = data["nextAiringEpisode"]["episode"]
         air_on = make_it_rw(nextAir)
     s_date = data.get("startDate")
     adult = data.get("isAdult")
