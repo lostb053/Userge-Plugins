@@ -525,7 +525,7 @@ async def character_search(message: Message):
     (`{name}`)
 **ID:** {id_}
 
-**Featured in:** __{snin}__
+**Featured in:** `{snin}`
 [About Character]({url_})
 [Visit Website]({site_url})"""
 
