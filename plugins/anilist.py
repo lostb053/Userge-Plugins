@@ -335,7 +335,11 @@ async def anim_arch(message: Message):
         finals_ = f"[\u200b]({title_img}) {finals_}"
         await message.edit(finals_)
         return
-    await message.reply_photo(title_img, caption=finals_)
+    if len(finals_) <= 1023:
+        await message.reply_photo(title_img, caption=finals_)
+    else:
+        await message.reply_photo(title_img)
+        await message.reply(finals_, disable_web_page_preview=True)
     await message.delete()
 
 
@@ -530,7 +534,11 @@ async def character_search(message: Message):
 [About Character]({url_})
 [Visit Website]({site_url})"""
 
-    await message.reply_photo(img, caption=cap_text)
+    if len(cap_text) <= 1023:
+        await message.reply_photo(img, caption=cap_text)
+    else:
+        await message.reply_photo(img)
+        await message.reply(cap_text, disable_web_page_preview=True)
     await message.delete()
 
 
