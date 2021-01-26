@@ -35,7 +35,7 @@ ANIME_TEMPLATE = """[{c_flag}]**{romaji}**\n
 ➤ **DURATION:** `{duration}`
 ➤ **CHARACTERS:** `{chrctrs}`
 ➤ **STATUS:** `{status}`
-➤ **NEXT AIRING:** `{air_on} | {air_ep}`
+➤ **NEXT AIRING:** `{air_on}`
 ➤ **SCORE:** `{score}%` 🌟
 ➤ **ADULT RATED:** `{adult}`
 🎬 {trailer_link}
@@ -272,8 +272,8 @@ async def anim_arch(message: Message):
     air_on = None
     if data["nextAiringEpisode"]:
         nextAir = data["nextAiringEpisode"]["airingAt"]
-        air_ep = data["nextAiringEpisode"]["episode"]
         air_on = make_it_rw(nextAir)
+        air_on += f" | {data['nextAiringEpisode']['episode']}"
     s_date = data.get("startDate")
     adult = data.get("isAdult")
     trailer_link = "N/A"
