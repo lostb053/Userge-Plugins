@@ -243,8 +243,8 @@ async def anim_arch(message: Message):
     # pylint: disable=possibly-unused-variable
     idm = data.get("id")
     idmal = data.get("idMal")
-    romaji = data["title"]["romaji"]
-    english = data["title"]["english"]
+    romaji = f"{data['title']['romaji']}\n"
+    english = f"{data['title']['english']}\n" if data['title']['english'] != None else ""
     native = data["title"]["native"]
     formats = data.get("format")
     status = data.get("status")
@@ -365,10 +365,8 @@ async def airing_anim(message: Message):
 
     # Airing Details
     mid = data.get("id")
-    romaji = f"{data['title']['romaji']}\n"
-    english = (
-        f"{data['title']['english']}\n" if data["title"]["english"] != None else ""
-    )
+    romaji = data['title']['romaji']
+    english = data['title']['english']
     native = data["title"]["native"]
     status = data.get("status")
     episodes = data.get("episodes")
