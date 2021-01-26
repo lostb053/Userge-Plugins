@@ -22,7 +22,9 @@ from userge.utils import xbot
 CLOG = userge.getCLogger(__name__)
 
 # Default templates for Query Formatting
-ANIME_TEMPLATE = """[{c_flag}]**{romaji}**        __{english}__        {native}
+ANIME_TEMPLATE = """[{c_flag}]**{romaji}**
+        __{english}__
+        {native}
 
 **ID | MAL ID:** `{idm}` | `{idmal}`
 ➤ **SOURCE:** `{source}`
@@ -243,10 +245,8 @@ async def anim_arch(message: Message):
     # pylint: disable=possibly-unused-variable
     idm = data.get("id")
     idmal = data.get("idMal")
-    romaji = f"{data['title']['romaji']}\n"
-    english = (
-        f"{data['title']['english']}\n" if data["title"]["english"] != None else ""
-    )
+    romaji = data['title']['romaji']
+    english = data['title']['english'] if data['title']['english'] != None else "--------"
     native = data["title"]["native"]
     formats = data.get("format")
     status = data.get("status")
