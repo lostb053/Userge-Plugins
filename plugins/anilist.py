@@ -22,9 +22,7 @@ from userge.utils import xbot
 CLOG = userge.getCLogger(__name__)
 
 # Default templates for Query Formatting
-ANIME_TEMPLATE = """[{c_flag}]**{romaji}**
-        __{english}__
-        {native}
+ANIME_TEMPLATE = """[{c_flag}]**{romaji}**        __{english}__        {native}
 
 **ID | MAL ID:** `{idm}` | `{idmal}`
 ➤ **SOURCE:** `{source}`
@@ -367,8 +365,8 @@ async def airing_anim(message: Message):
 
     # Airing Details
     mid = data.get("id")
-    romaji = data["title"]["romaji"]
-    english = data["title"]["english"]
+    romaji = f"{data['title']['romaji']}\n"
+    english = f"{data['title']['english']}\n" if data['title']['english'] != None else ""
     native = data["title"]["native"]
     status = data.get("status")
     episodes = data.get("episodes")
