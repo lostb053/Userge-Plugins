@@ -494,7 +494,8 @@ async def character_search(message: Message):
     snin = "\n"
     for ani in featured:
         k = ani["title"]["english"] or ani["title"]["romaji"]
-        snin += "    • " + k + "\n"
+        kk = ani["type"]
+        snin += f"    • {k} __[{kk}]__ \n"
     sp = 0
     cntnt = ""
     for cf in featured:
