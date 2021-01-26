@@ -260,11 +260,11 @@ async def anim_arch(message: Message):
     coverImg = data.get("coverImage")["extraLarge"]
     bannerImg = data.get("bannerImage")
     genres = data.get("genres")
+    charlist = []
     for char in data["characters"]["nodes"]:
-        charlist = []
         charlist.append(f"    {char['name']['full']}")
     chrctrs = "\n"
-    chrctrs += ("\n").join(charlist[:7])
+    chrctrs += ("\n").join(charlist[:10])
     genre = genres[0]
     if len(genres) != 1:
         genre = ", ".join(genres)
