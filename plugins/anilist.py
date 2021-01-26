@@ -23,8 +23,8 @@ CLOG = userge.getCLogger(__name__)
 
 # Default templates for Query Formatting
 ANIME_TEMPLATE = """[{c_flag}]**{romaji}**
-    __{english}__
-    {native}
+        __{english}__
+        {native}
 
 **ID | MAL ID:** `{idm}` | `{idmal}`
 ➤ **SOURCE:** `{source}`
@@ -262,7 +262,7 @@ async def anim_arch(message: Message):
     genres = data.get("genres")
     charlist = []
     for char in data["characters"]["nodes"]:
-        charlist.append(f"    {char['name']['full']}")
+        charlist.append(f"    •{char['name']['full']}")
     chrctrs = "\n"
     chrctrs += ("\n").join(charlist[:10])
     genre = genres[0]
@@ -273,7 +273,7 @@ async def anim_arch(message: Message):
     if data["nextAiringEpisode"]:
         nextAir = data["nextAiringEpisode"]["airingAt"]
         air_on = make_it_rw(nextAir)
-        air_on += f" | {data['nextAiringEpisode']['episode']}"
+        air_on += f" | {data['nextAiringEpisode']['episode']}th eps"
     s_date = data.get("startDate")
     adult = data.get("isAdult")
     trailer_link = "N/A"
