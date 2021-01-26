@@ -488,7 +488,9 @@ async def character_search(message: Message):
     site_url = data["siteUrl"]
     description = data["description"]
     featured = data["media"]["nodes"]
-
+    snin = "\n"
+    for ani in featured:
+        snin += f"• {ani['title']['english']} \n {ani['title']['romaji']}"
     sp = 0
     cntnt = ""
     for cf in featured:
@@ -522,7 +524,7 @@ async def character_search(message: Message):
     (`{name}`)
 **ID:** {id_}
 [About Character]({url_})
-
+Featured in: {snin}
 [Visit Website]({site_url})"""
 
     await message.reply_photo(img, caption=cap_text)
