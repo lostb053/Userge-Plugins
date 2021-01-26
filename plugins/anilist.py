@@ -22,8 +22,8 @@ from userge.utils import xbot
 CLOG = userge.getCLogger(__name__)
 
 # Default templates for Query Formatting
-ANIME_TEMPLATE = """[{c_flag}]**{romaji}**\n
-    __{english}__\n
+ANIME_TEMPLATE = """[{c_flag}]**{romaji}**
+    __{english}__
     {native}
 
 **ID | MAL ID:** `{idm}` | `{idmal}`
