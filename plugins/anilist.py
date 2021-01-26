@@ -245,8 +245,10 @@ async def anim_arch(message: Message):
     # pylint: disable=possibly-unused-variable
     idm = data.get("id")
     idmal = data.get("idMal")
-    romaji = data['title']['romaji']
-    english = data['title']['english'] if data['title']['english'] != None else "--------"
+    romaji = data["title"]["romaji"]
+    english = (
+        data["title"]["english"] if data["title"]["english"] != None else "--------"
+    )
     native = data["title"]["native"]
     formats = data.get("format")
     status = data.get("status")
