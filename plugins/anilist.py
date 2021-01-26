@@ -490,7 +490,8 @@ async def character_search(message: Message):
     featured = data["media"]["nodes"]
     snin = "\n"
     for ani in featured:
-        snin += "    • " + ani["title"]["english"] or ani["title"]["romaji"] + "\n"
+        k = ani["title"]["english"] or ani["title"]["romaji"]
+        snin += "    • " + k + "\n"
     sp = 0
     cntnt = ""
     for cf in featured:
