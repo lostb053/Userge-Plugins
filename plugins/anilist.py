@@ -490,7 +490,7 @@ async def character_search(message: Message):
     featured = data["media"]["nodes"]
     snin = "\n"
     for ani in featured:
-        snin += f"• {ani['title']['english']} \n {ani['title']['romaji']}"
+        snin += "    • " + ani['title']['english'] or ani['title']['romaji'] + "\n"
     sp = 0
     cntnt = ""
     for cf in featured:
@@ -523,8 +523,8 @@ async def character_search(message: Message):
     cap_text = f"""[🇯🇵] __{native}__
     (`{name}`)
 **ID:** {id_}
+**Featured in:** {snin}
 [About Character]({url_})
-Featured in: {snin}
 [Visit Website]({site_url})"""
 
     await message.reply_photo(img, caption=cap_text)
