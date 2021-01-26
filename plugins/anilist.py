@@ -244,7 +244,9 @@ async def anim_arch(message: Message):
     idm = data.get("id")
     idmal = data.get("idMal")
     romaji = f"{data['title']['romaji']}\n"
-    english = f"{data['title']['english']}\n" if data['title']['english'] != None else ""
+    english = (
+        f"{data['title']['english']}\n" if data["title"]["english"] != None else ""
+    )
     native = data["title"]["native"]
     formats = data.get("format")
     status = data.get("status")
@@ -365,8 +367,8 @@ async def airing_anim(message: Message):
 
     # Airing Details
     mid = data.get("id")
-    romaji = data['title']['romaji']
-    english = data['title']['english']
+    romaji = data["title"]["romaji"]
+    english = data["title"]["english"]
     native = data["title"]["native"]
     status = data.get("status")
     episodes = data.get("episodes")
