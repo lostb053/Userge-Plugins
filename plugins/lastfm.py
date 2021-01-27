@@ -11,7 +11,7 @@ import asyncio
 
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from userge import Config, Message, get_collection, userge
-from userge.lastfm import get_response, pcurl, tglst, user
+from userge.lastfm import auth_, get_response, pcurl, tglst, user
 from userge.utils import rand_array
 
 du = "https://last.fm/user/"
@@ -242,8 +242,62 @@ async def last_fm_played_(message: Message):
     await message.edit(rep, disable_web_page_preview=True)
 
 
+@userge.on_cmd(
+    "loveit",
+    about={
+        "header": "love recently playing song",
+        "usage": "{tr}loveit",
+    },
+)
+async def last_fm_played_(message: Message):
+    """Loves Currently Playing Song"""
+    await message.edit("Loving Currently Playing...")
+    params = {
+        "method": "user.getrecenttracks",
+        "limit": 2,
+        "user": Config.LASTFM_USERNAME,
+        "api_key": Config.LASTFM_API_KEY,
+        "format": "json",
+    }
+    recent_song = (await get_response(params))[1]["recenttracks"]["track"]
+    if len(recent_song) == 0 or not recent_song[0].get("@attr"):
+        return await message.err("No Currently Playing Track found", del_in=10)
+    song_ = recent_song[0]
+    snm = song_["name"]
+    anm = song_["artist"]["name"]
+    x = auth_().get_track(anm, snm).love()
+    await message.edit(f"Loved currently playing track...\n`{anm} - {snm}`", del_in=5)
+
+
+@userge.on_cmd(
+    "unloveit",
+    about={
+        "header": "unlove recently playing song",
+        "usage": "{tr}unloveit",
+    },
+)
+async def last_fm_played_(message: Message):
+    """UnLoves Currently Playing Song"""
+    await message.edit("UnLoving Currently Playing...")
+    params = {
+        "method": "user.getrecenttracks",
+        "limit": 2,
+        "user": Config.LASTFM_USERNAME,
+        "api_key": Config.LASTFM_API_KEY,
+        "format": "json",
+    }
+    recent_song = (await get_response(params))[1]["recenttracks"]["track"]
+    if len(recent_song) == 0 or not recent_song[0].get("@attr"):
+        return await message.err("No Currently Playing Track found", del_in=10)
+    song_ = recent_song[0]
+    snm = song_["name"]
+    anm = song_["artist"]["name"]
+    x = auth_().get_track(anm, snm).unlove()
+    await message.edit(f"UnLoved currently playing track...\n`{anm} - {snm}`", del_in=5)
+
+
 # The following code won't return actual compatibility as available on site
-# but is basically similar to @lastfmrobot's compat cmd
+# but is basically similar to @lastfmrobot's compat cmd (just similar not same)
 @userge.on_cmd(
     "compat",
     about={
