@@ -11,7 +11,7 @@ import asyncio
 
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from userge import Config, Message, get_collection, userge
-from userge.lastfm import auth_, get_response, pcurl, tglst, user, ripimg
+from userge.lastfm import auth_, get_response, pcurl, ripimg, tglst, user
 from userge.utils import rand_array
 
 du = "https://last.fm/user/"
