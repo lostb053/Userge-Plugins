@@ -263,8 +263,8 @@ async def last_fm_played_(message: Message):
     if len(recent_song) == 0 or not recent_song[0].get("@attr"):
         return await message.err("No Currently Playing Track found", del_in=10)
     song_ = recent_song[0]
-    snm = song_["name"]
     anm = song_["artist"]["name"]
+    snm = song_["name"]
     auth_().get_track(anm, snm).love()
     await message.edit(f"Loved currently playing track...\n`{anm} - {snm}`", del_in=5)
 
@@ -290,8 +290,8 @@ async def last_fm_played_(message: Message):
     if len(recent_song) == 0 or not recent_song[0].get("@attr"):
         return await message.err("No Currently Playing Track found", del_in=10)
     song_ = recent_song[0]
-    snm = song_["name"]
     anm = song_["artist"]["name"]
+    snm = song_["name"]
     auth_().get_track(anm, snm).unlove()
     await message.edit(f"UnLoved currently playing track...\n`{anm} - {snm}`", del_in=5)
 
