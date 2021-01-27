@@ -11,7 +11,7 @@ import asyncio
 
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from userge import Config, Message, get_collection, userge
-from userge.lastfm import auth_, get_response, pcurl, tglst, user, welp
+from userge.lastfm import auth_, get_response, pcurl, tglst, user, ripimg
 from userge.utils import rand_array
 
 du = "https://last.fm/user/"
@@ -66,7 +66,7 @@ async def last_fm_pic_(message: Message):
     querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
     if recent_song[0].get("@attr"):
         img = recent_song[0].get("image")[3].get("#text")
-        if img in welp():
+        if img in ripimg():
             img = rand_array(pcurl())
         rep = f"[\u200c]({img})**{querydisplay}** is currently listening to:\n"
         song_ = recent_song[0]
@@ -259,7 +259,7 @@ async def last_fm_played_(message: Message):
     if len(recent_song) == 0 or not recent_song[0].get("@attr"):
         return await message.err("No Currently Playing Track found", del_in=10)
     img = recent_song[0].get("image")[3].get("#text")
-    if img in welp():
+    if img in ripimg():
         img = rand_array(pcurl())
     song_ = recent_song[0]
     anm = song_["artist"]["#text"]
@@ -291,7 +291,7 @@ async def last_fm_played_(message: Message):
     if len(recent_song) == 0 or not recent_song[0].get("@attr"):
         return await message.err("No Currently Playing Track found", del_in=10)
     img = recent_song[0].get("image")[3].get("#text")
-    if img in welp():
+    if img in ripimg():
         img = rand_array(pcurl())
     song_ = recent_song[0]
     anm = song_["artist"]["#text"]
