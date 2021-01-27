@@ -11,7 +11,7 @@ import asyncio
 
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from userge import Config, Message, get_collection, userge
-from userge.lastfm import auth_, get_response, pcurl, tglst, user
+from userge.lastfm import auth_, get_response, pcurl, tglst, user, welp
 from userge.utils import rand_array
 
 du = "https://last.fm/user/"
@@ -66,11 +66,7 @@ async def last_fm_pic_(message: Message):
     querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
     if recent_song[0].get("@attr"):
         img = recent_song[0].get("image")[3].get("#text")
-        if img in [
-            "https:\/\/lastfm.freetls.fastly.net\/i\/u\/300x300\/2a96cbd8b46e442fc41c2b86b821562f.png",
-            "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png",
-            "",
-        ]:
+        if img in welp():
             img = rand_array(pcurl())
         rep = f"[\u200c]({img})**{querydisplay}** is currently listening to:\n"
         song_ = recent_song[0]
@@ -262,11 +258,14 @@ async def last_fm_played_(message: Message):
     recent_song = (await get_response(params))[1]["recenttracks"]["track"]
     if len(recent_song) == 0 or not recent_song[0].get("@attr"):
         return await message.err("No Currently Playing Track found", del_in=10)
+    img = recent_song[0].get("image")[3].get("#text")
+    if img in welp():
+        img = rand_array(pcurl())
     song_ = recent_song[0]
-    anm = song_["artist"]["name"]
+    anm = song_["artist"]["#text"]
     snm = song_["name"]
     auth_().get_track(anm, snm).love()
-    await message.edit(f"Loved currently playing track...\n`{anm} - {snm}`", del_in=5)
+    await message.edit(f"Loved currently playing track...\n`{anm} - {snm}` [\u200c]({img})")
 
 
 @userge.on_cmd(
@@ -289,11 +288,14 @@ async def last_fm_played_(message: Message):
     recent_song = (await get_response(params))[1]["recenttracks"]["track"]
     if len(recent_song) == 0 or not recent_song[0].get("@attr"):
         return await message.err("No Currently Playing Track found", del_in=10)
+    img = recent_song[0].get("image")[3].get("#text")
+    if img in welp():
+        img = rand_array(pcurl())
     song_ = recent_song[0]
-    anm = song_["artist"]["name"]
+    anm = song_["artist"]["#text"]
     snm = song_["name"]
     auth_().get_track(anm, snm).unlove()
-    await message.edit(f"UnLoved currently playing track...\n`{anm} - {snm}`", del_in=5)
+    await message.edit(f"UnLoved currently playing track...\n`{anm} - {snm}` [\u200c]({img})")
 
 
 # The following code won't return actual compatibility as available on site
