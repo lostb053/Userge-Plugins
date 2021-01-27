@@ -265,7 +265,9 @@ async def last_fm_played_(message: Message):
     anm = song_["artist"]["#text"]
     snm = song_["name"]
     auth_().get_track(anm, snm).love()
-    await message.edit(f"Loved currently playing track...\n`{anm} - {snm}` [\u200c]({img})")
+    await message.edit(
+        f"Loved currently playing track...\n`{anm} - {snm}` [\u200c]({img})"
+    )
 
 
 @userge.on_cmd(
@@ -295,7 +297,9 @@ async def last_fm_played_(message: Message):
     anm = song_["artist"]["#text"]
     snm = song_["name"]
     auth_().get_track(anm, snm).unlove()
-    await message.edit(f"UnLoved currently playing track...\n`{anm} - {snm}` [\u200c]({img})")
+    await message.edit(
+        f"UnLoved currently playing track...\n`{anm} - {snm}` [\u200c]({img})"
+    )
 
 
 # The following code won't return actual compatibility as available on site
