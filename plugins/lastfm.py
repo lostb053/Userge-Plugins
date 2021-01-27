@@ -265,7 +265,7 @@ async def last_fm_played_(message: Message):
     song_ = recent_song[0]
     snm = song_["name"]
     anm = song_["artist"]["name"]
-    x = auth_().get_track(anm, snm).love()
+    auth_().get_track(anm, snm).love()
     await message.edit(f"Loved currently playing track...\n`{anm} - {snm}`", del_in=5)
 
 
@@ -292,7 +292,7 @@ async def last_fm_played_(message: Message):
     song_ = recent_song[0]
     snm = song_["name"]
     anm = song_["artist"]["name"]
-    x = auth_().get_track(anm, snm).unlove()
+    auth_().get_track(anm, snm).unlove()
     await message.edit(f"UnLoved currently playing track...\n`{anm} - {snm}`", del_in=5)
 
 
