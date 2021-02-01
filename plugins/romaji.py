@@ -28,7 +28,7 @@ async def romaji_(message: Message):
         y = x.split("\n")
         result = translator.translate(y, lang_src="ja", lang_tgt="en", pronounce=True)
         k = result[1]
-        if k == None:
+        if k is None:
             result = translator.translate(
                 y, lang_src="en", lang_tgt="ja", pronounce=True
             )
