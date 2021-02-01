@@ -247,7 +247,7 @@ async def anim_arch(message: Message):
     idmal = data.get("idMal")
     romaji = data["title"]["romaji"]
     english = (
-        data["title"]["english"] if data["title"]["english"] != None else "--------"
+        data["title"]["english"] if data["title"]["english"] is not None else "--------"
     )
     native = data["title"]["native"]
     formats = data.get("format")
