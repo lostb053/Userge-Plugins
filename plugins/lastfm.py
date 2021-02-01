@@ -90,7 +90,9 @@ async def last_fm_pic_(message: Message):
         )["track"]["toptags"]["tag"]
         y = [i.replace(" ", "_").replace("-", "_") for i in [tg["name"] for tg in gt]]
         z = []
-        z.append(k.lower()) for k in y if k in tglst() and k not in z
+        for k in y.lower():
+            if k in tglst():
+                z.append(k)
         neutags = " #".join(z[i] for i in range(min(len(z), 4)))
         if neutags != "":
             rep += f"\n#{neutags}"
