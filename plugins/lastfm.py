@@ -174,8 +174,11 @@ async def last_pc_(message: Message):
         "format": "json",
     }
     lastuser = (await get_response(params))[1]["user"]
-    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()    
-    await message.edit(f"**{querydisplay}'s** playcount is:\n{lastuser['playcount']}", disable_web_page_preview=True)
+    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
+    await message.edit(
+        f"**{querydisplay}'s** playcount is:\n{lastuser['playcount']}",
+        disable_web_page_preview=True,
+    )
 
 
 @userge.on_cmd(
