@@ -308,6 +308,7 @@ async def last_fm_played_(message: Message):
 
 # The following code won't return actual compatibility as available on site
 # but is basically similar to @lastfmrobot's compat cmd (just similar not same)
+# phew ...
 @userge.on_cmd(
     "compat",
     about={
