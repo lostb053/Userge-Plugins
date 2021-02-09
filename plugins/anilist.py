@@ -286,9 +286,11 @@ async def anim_arch(message: Message):
         )
         html_char += f"{html_}<br><br>"
 
-    studios = ""
-    for studio in data["studios"]["nodes"]:
-        studios += "<a href='{}'>• {}</a> ".format(studio["siteUrl"], studio["name"])
+    studios = "".join(
+        "<a href='{}'>• {}</a> ".format(studio["siteUrl"], studio["name"])
+        for studio in data["studios"]["nodes"]
+    )
+
     url = data.get("siteUrl")
 
     title_img = coverImg or bannerImg
