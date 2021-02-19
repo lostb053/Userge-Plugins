@@ -9,7 +9,6 @@
 
 import asyncio
 
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from userge import Config, Message, get_collection, userge
 from userge.lastfm import auth_, get_response, pcurl, ripimg, tglst, user
 from userge.utils import rand_array
@@ -305,9 +304,11 @@ async def last_fm_unlove_(message: Message):
 )
 async def lastfm_compat_(message: Message):
     """Shows Music Compatibility"""
+
     def UwU(name):
         params["user"] = name
         return params
+
     if "|" in message.input_str:
         us1, us2 = message.input_str.split("|")
         display = f"**[{us1}]({du}{us1})** and **[{us2}]({du}{us2})**"
