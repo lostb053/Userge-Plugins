@@ -321,6 +321,7 @@ async def lastfm_compat_(message: Message):
     def UwU(name):
         params["user"] = name
         return params
+
     """Shows Music Compatibility"""
     if "|" in message.input_str:
         us1, us2 = message.input_str.split("|")
@@ -331,10 +332,10 @@ async def lastfm_compat_(message: Message):
     else:
         return await message.edit("Please check `{tr}help Compat`")
     params = {
-                "method": "user.getTopArtists",
-                "limit": 500,
-                "api_key": Config.LASTFM_API_KEY,
-                "format": "json",
+        "method": "user.getTopArtists",
+        "limit": 500,
+        "api_key": Config.LASTFM_API_KEY,
+        "format": "json",
     }
     ta1 = (await get_response(UwU(us1)))[1]["topartists"]["artist"]
     ta2 = (await get_response(UwU(us2)))[1]["topartists"]["artist"]
