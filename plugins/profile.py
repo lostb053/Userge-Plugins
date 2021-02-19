@@ -492,7 +492,7 @@ async def poto_x(message: Message):
                 media = []
         if len(media) != 0:
             media_group.append(media)
-        if len(media_group) == 0:
+        if not media_group:
             # Happens if bot doesn't know the user
             await message.delete()
             return
