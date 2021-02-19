@@ -314,13 +314,14 @@ async def last_fm_played_(message: Message):
     about={
         "header": "Compat",
         "description": "check music compat level with other lastfm users",
-        "usage": """{tr}compat lastfmusername
-        or
-        {tr}compat lastfmusername1|lastfmusername2
-        """,
+        "usage": "{tr}compat lastfmuser or {tr}compat lastfmuser1|lastfmuser2",
     },
 )
 async def lastfm_compat_(message: Message):
+    def UwU(name):
+        params["user"] = name
+        return params
+
     """Shows Music Compatibility"""
     if "|" in message.input_str:
         us1, us2 = message.input_str.split("|")
@@ -330,28 +331,14 @@ async def lastfm_compat_(message: Message):
         display = f"**{await user()}** and **[{us2}]({du}{us2})**"
     else:
         return await message.edit("Please check `{tr}help Compat`")
-    ta1 = (
-        await get_response(
-            {
-                "method": "user.getTopArtists",
-                "user": us1,
-                "limit": 500,
-                "api_key": Config.LASTFM_API_KEY,
-                "format": "json",
-            }
-        )
-    )[1]["topartists"]["artist"]
-    ta2 = (
-        await get_response(
-            {
-                "method": "user.getTopArtists",
-                "user": us2,
-                "limit": 500,
-                "api_key": Config.LASTFM_API_KEY,
-                "format": "json",
-            }
-        )
-    )[1]["topartists"]["artist"]
+    params = {
+        "method": "user.getTopArtists",
+        "limit": 500,
+        "api_key": Config.LASTFM_API_KEY,
+        "format": "json",
+    }
+    ta1 = (await get_response(UwU(us1)))[1]["topartists"]["artist"]
+    ta2 = (await get_response(UwU(us2)))[1]["topartists"]["artist"]
     ad1, ad2 = [n["name"] for n in ta1], [n["name"] for n in ta2]
     comart = [value for value in ad2 if value in ad1]
     compat = min((len(comart) * 100 / 40), 100)
