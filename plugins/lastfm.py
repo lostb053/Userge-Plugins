@@ -96,21 +96,7 @@ async def last_fm_pic_(message: Message):
         neutags = " #".join(z[i] for i in range(min(len(z), 4)))
         if neutags != "":
             rep += f"\n#{neutags}"
-        qry = "%20".join(
-            (artist_name.replace(" ", "%20"), song_name.replace(" ", "%20"))
-        )
-        b = [
-            [
-                InlineKeyboardButton(
-                    text="🎼YouTube",
-                    url=f"https://www.youtube.com/results?search_query={qry}",
-                ),
-                InlineKeyboardButton(
-                    text="🎶Spotify", url=f"https://open.spotify.com/search/{qry}"
-                ),
-            ]
-        ]
-        await message.edit(rep, reply_markup=InlineKeyboardMarkup(b))
+        await message.edit(rep)
     else:
         rep = f"**{querydisplay}** was listening to ...\n"
         playcount = view_data.get("recenttracks").get("@attr").get("total")
@@ -249,7 +235,7 @@ async def last_fm_played_(message: Message):
         "usage": "{tr}loveit",
     },
 )
-async def last_fm_played_(message: Message):
+async def last_fm_love_(message: Message):
     """Loves Currently Playing Song"""
     await message.edit("Loving Currently Playing...")
     params = {
@@ -281,7 +267,7 @@ async def last_fm_played_(message: Message):
         "usage": "{tr}unloveit",
     },
 )
-async def last_fm_played_(message: Message):
+async def last_fm_unlove_(message: Message):
     """UnLoves Currently Playing Song"""
     await message.edit("UnLoving Currently Playing...")
     params = {
@@ -318,11 +304,10 @@ async def last_fm_played_(message: Message):
     },
 )
 async def lastfm_compat_(message: Message):
+    """Shows Music Compatibility"""
     def UwU(name):
         params["user"] = name
         return params
-
-    """Shows Music Compatibility"""
     if "|" in message.input_str:
         us1, us2 = message.input_str.split("|")
         display = f"**[{us1}]({du}{us1})** and **[{us2}]({du}{us2})**"
