@@ -3,8 +3,7 @@
 # Copyright (C) 2020 BY USERGE-X.
 # All rights reserved.
 # Inspiration from @lastfmrobot <mainly> (owned by @dangou on telegram) and...
-# @TheRealPhoenixBot(owned by @TheRealPhoenix on telegram and...
-# github user as rsktg)
+# @TheRealPhoenixBot(owned by @TheRealPhoenix on telegram and github user as rsktg)
 # Code re-written by @DeletedUser420 (telegram), github user as code-rgb
 
 import asyncio
@@ -21,15 +20,14 @@ du = "https://last.fm/user/"
     about={
         "header": "Toggle LastFM Profile",
         "description": "toggle lastfm profile to be shown or hidden",
-        "usage": "{tr}toggleprofile on/off",
+        "usage": "{tr}toggleprofile",
     },
 )
 async def toggle_lastfm_profile_(message: Message):
     """Toggle LastFM Profile"""
-    if not message.input_str:
-        return await message.edit("Please check `{tr}help toggleprofile`", del_in=5)
-    in_ = message.input_str
-    tgl = "Show" if in_ == "on" else "Hide" if in_ == "off" else ""
+    try:
+        data = await get_collection("CONFIGS").find_one({"_id": "SHOW_LASTFM"})
+    tgl = "Hide" if data and data["on"] == "Show" else "Show"
     await asyncio.gather(
         get_collection("CONFIGS").update_one(
             {"_id": "SHOW_LASTFM"},
@@ -62,45 +60,40 @@ async def last_fm_pic_(message: Message):
     recent_song = view_data["recenttracks"]["track"]
     if len(recent_song) == 0:
         return await message.err("No Recent Tracks found", del_in=5)
-    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
+    qd = f"[{query}]({du}{query})" if message.input_str else await user()
     if recent_song[0].get("@attr"):
         img = recent_song[0].get("image")[3].get("#text")
         if img in ripimg():
             img = rand_array(pcurl())
-        rep = f"[\u200c]({img})**{querydisplay}** is currently listening to:\n"
+        rep = f"[\u200c]({img})**{qd}** is currently listening to:\n"
         song_ = recent_song[0]
         song_name = song_["name"]
         artist_name = song_["artist"]["name"]
         rep += f"🎧  <code>{artist_name} - {song_name}</code>"
-        if song_["loved"] != "0":
-            rep += ", ♥️"
+        rep += ", ♥️" if song_["loved"] != "0" else ""
         gt = (
-            (
-                await get_response(
-                    {
-                        "method": "track.getInfo",
-                        "track": song_name,
-                        "artist": artist_name,
-                        "api_key": Config.LASTFM_API_KEY,
-                        "format": "json",
-                    }
-                )
-            )[1]
-        )["track"]["toptags"]["tag"]
+            await get_response(
+                {
+                    "method": "track.getInfo",
+                    "track": song_name,
+                    "artist": artist_name,
+                    "api_key": Config.LASTFM_API_KEY,
+                    "format": "json",
+                }
+            )
+        )[1]["track"]["toptags"]["tag"]
         y = [i.replace(" ", "_").replace("-", "_") for i in [tg["name"] for tg in gt]]
         z = [k for k in y if k.lower() in tglst()]
         neutags = " #".join(z[i] for i in range(min(len(z), 4)))
-        if neutags != "":
-            rep += f"\n#{neutags}"
+        rep += f"\n#{neutags}" if neutags != "" else ""
     else:
-        rep = f"**{querydisplay}** was listening to ...\n"
+        rep = f"**{qd}** was listening to ...\n"
         playcount = view_data.get("recenttracks").get("@attr").get("total")
         for song_ in recent_song:
             song_name = song_["name"]
             artist_name = song_["artist"]["name"]
             rep += f"\n🎧  {artist_name} - {song_name}"
-            if song_["loved"] != "0":
-                rep += ", ♥️"
+            rep += ", ♥️" if song_["loved"] != "0" else ""
         rep += f"`\n\nTotal Scrobbles = {playcount}`"
     await message.edit(rep)
 
@@ -124,17 +117,14 @@ async def last_fm_user_info_(message: Message):
     lastuser = (await get_response(params))[1]["user"]
     lastimg = lastuser.get("image")[3].get("#text")
     result = ""
-    if lastimg:
-        result += f"[\u200c]({lastimg})"
-    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
-    result += f"LastFM User Info for **{querydisplay}**:\n**User:** {query}\n"
+    result += f"[\u200c]({lastimg})" if lastimg else ""
+    qd = f"[{query}]({du}{query})" if message.input_str else await user()
+    result += f"LastFM User Info for **{qd}**:\n**User:** {query}\n"
     name = lastuser.get("realname")
-    if name != "":
-        result += f" 🔰 **Name:** {name}\n"
+    result += f" 🔰 **Name:** {name}\n" if name != "" else ""
     result += f" 🎵 **Total Scrobbles:** {lastuser['playcount']}\n"
     country = lastuser.get("country")
-    if country != "None":
-        result += f" 🌍 **Country:** {country}\n"
+    result += f" 🌍 **Country:** {country}\n" if country != "None" else ""
     await message.edit(result)
 
 
@@ -155,9 +145,9 @@ async def last_pc_(message: Message):
         "format": "json",
     }
     lastuser = (await get_response(params))[1]["user"]
-    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
+    qd = f"[{query}]({du}{query})" if message.input_str else await user()
     await message.edit(
-        f"**{querydisplay}'s** playcount is:\n{lastuser['playcount']}",
+        f"**{qd}'s** playcount is:\n{lastuser['playcount']}",
         disable_web_page_preview=True,
     )
 
@@ -182,8 +172,8 @@ async def last_fm_loved_tracks_(message: Message):
     tracks = (await get_response(params))[1]["lovedtracks"]["track"]
     if len(tracks) == 0:
         return await message.edit("You Don't have any Loved tracks yet.")
-    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
-    rep = f"**Favourite (♥️) Tracks for {querydisplay}**"
+    qd = f"[{query}]({du}{query})" if message.input_str else await user()
+    rep = f"**Favourite (♥️) Tracks for {qd}**"
     for song_ in tracks:
         song_name = song_["name"]
         artist_name = song_["artist"]["name"]
@@ -201,7 +191,7 @@ async def last_fm_loved_tracks_(message: Message):
 async def last_fm_played_(message: Message):
     """Shows Recently Played Songs"""
     query = message.input_str or Config.LASTFM_USERNAME
-    querydisplay = f"[{query}]({du}{query})" if message.input_str else await user()
+    qd = f"[{query}]({du}{query})" if message.input_str else await user()
     params = {
         "method": "user.getrecenttracks",
         "limit": 20,
@@ -213,13 +203,12 @@ async def last_fm_played_(message: Message):
     recent_song = (await get_response(params))[1]["recenttracks"]["track"]
     if len(recent_song) == 0:
         return await message.err("No Recent Tracks found", del_in=5)
-    rep = f"**{querydisplay}** recently played 🎵 songs:\n"
+    rep = f"**{qd}** recently played 🎵 songs:\n"
     for song_ in recent_song:
         song_name = song_["name"]
         artist_name = song_["artist"]["name"]
         rep += f"\n🎧  {artist_name} - {song_name}"
-        if song_["loved"] != "0":
-            rep += ", ♥️"
+        rep += ", ♥️" if song_["loved"] != "0" else ""
     await message.edit(rep, disable_web_page_preview=True)
 
 
@@ -287,9 +276,7 @@ async def last_fm_unlove_(message: Message):
     )
 
 
-# The following code won't return actual compatibility as available on site
-# but is basically similar to @lastfmrobot's compat cmd (just similar not same)
-# phew ...
+# inspired from @lastfmrobot's compat
 @userge.on_cmd(
     "compat",
     about={
@@ -305,14 +292,11 @@ async def lastfm_compat_(message: Message):
         params["user"] = name
         return params
 
-    if "|" in message.input_str:
-        us1, us2 = message.input_str.split("|")
-        display = f"**[{us1}]({du}{us1})** and **[{us2}]({du}{us2})**"
-    elif message.input_str:
-        us1, us2 = Config.LASTFM_USERNAME, message.input_str
-        display = f"**{await user()}** and **[{us2}]({du}{us2})**"
-    else:
+    if not message.input_str:
         return await message.edit("Please check `{tr}help Compat`")
+    diff = "|" in message.input_str
+    us1, us2 = message.input_str.split("|") if diff else Config.LASTFM_USERNAME, message.input_str
+    display = f"**{us1 if diff else await user()}** and **[{us2}]({du}{us2})**"
     params = {
         "method": "user.getTopArtists",
         "limit": 500,
