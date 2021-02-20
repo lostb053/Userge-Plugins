@@ -25,8 +25,7 @@ du = "https://last.fm/user/"
 )
 async def toggle_lastfm_profile_(message: Message):
     """Toggle LastFM Profile"""
-    try:
-        data = await get_collection("CONFIGS").find_one({"_id": "SHOW_LASTFM"})
+    data = await get_collection("CONFIGS").find_one({"_id": "SHOW_LASTFM"})
     tgl = "Hide" if data and data["on"] == "Show" else "Show"
     await asyncio.gather(
         get_collection("CONFIGS").update_one(
