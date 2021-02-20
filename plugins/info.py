@@ -3,9 +3,9 @@
 
 from datetime import datetime
 
-import requests
 import spamwatch
 from userge import Config, Message, get_collection, userge
+from userge.utils import get_response
 
 GBAN_USER_BASE = get_collection("GBAN_USER")
 GMUTE_USER_BASE = get_collection("GMUTE_USER")
@@ -42,7 +42,10 @@ async def info(msg: Message):
         return
     await msg.edit("`Getting Info...`")
     l_name = user.last_name or ""
-    username = "@" + user.username if user.username else "`None`"
+    if user.username:
+        username = "@" + user.username
+    else:
+        username = "`None`"
     common_chats = await msg.client.get_common_chats(user.id)
     user_info = f"""
 **About [{user.first_name} {l_name}](tg://user?id={user.id})**:
@@ -60,29 +63,51 @@ async def info(msg: Message):
                 user_info += "\n**SpamWatch Banned** : `False`\n"
             else:
                 user_info += "\n**SpamWatch Banned** : `True`\n"
-                user_info += f"**•Reason** : `{status.reason or None}`\n"
-                user_info += f"**•Message** : `{status.message or None}`\n"
+                user_info += f"    **• Reason** : `{status.reason or None}`\n"
+                user_info += f"    **• Message** : `{status.message or None}`\n"
         else:
-            user_info += "\n**SpamWatch Banned** : `To get this Info, Set Var`\n"
-        cas_banned = requests.get(
-            f"https://api.cas.chat/check?user_id={user.id}"
-        ).json()
-        if cas_banned["ok"]:
+            user_info += "\n**SpamWatch Banned** : `to get this Info, set var`\n"
+        antispam_api = [
+            "https://api.intellivoid.net/spamprotection/v1/lookup?query=",
+            "https://api.cas.chat/check?user_id=",
+        ]
+        async with get_response.get_session() as session:
+            try:
+                iv = await get_response.json(
+                    f"{antispam_api[0]}{user_id}", session=session
+                )
+            except ValueError:
+                iv = False
+            try:
+                cas_banned = await get_response.json(
+                    f"{antispam_api[1]}{user.id}", session=session
+                )
+            except ValueError:
+                cas_banned = False
+        user_gbanned = await GBAN_USER_BASE.find_one({"user_id": user.id})
+        user_gmuted = await GMUTE_USER_BASE.find_one({"user_id": user.id})
+        if iv and (
+            iv["success"] and iv["results"]["attributes"]["is_blacklisted"] is True
+        ):
+            reason = iv["results"]["attributes"]["blacklist_reason"]
+            user_info += "**Intellivoid SpamProtection** : `True`\n"
+            user_info += f"    **• Reason** : `{reason}`\n"
+        else:
+            user_info += "**Intellivoid SpamProtection** : `False`\n"
+        if cas_banned and (cas_banned["ok"]):
             reason = cas_banned["result"]["messages"][0] or None
             user_info += "**AntiSpam Banned** : `True`\n"
-            user_info += f"**•Reason** : `{reason}`\n"
+            user_info += f"    **• Reason** : `{reason}`\n"
         else:
             user_info += "**AntiSpam Banned** : `False`\n"
-        user_gmuted = await GMUTE_USER_BASE.find_one({"user_id": user.id})
         if user_gmuted:
             user_info += "**User GMuted** : `True`\n"
-            user_info += f"**•Reason** : `{user_gmuted['reason'] or None}`\n"
+            user_info += f"    **• Reason** : `{user_gmuted['reason'] or None}`\n"
         else:
             user_info += "**User GMuted** : `False`\n"
-        user_gbanned = await GBAN_USER_BASE.find_one({"user_id": user.id})
         if user_gbanned:
             user_info += "**User GBanned** : `True`\n"
-            user_info += f"**•Reason** : `{user_gbanned['reason'] or None}`"
+            user_info += f"    **• Reason** : `{user_gbanned['reason'] or None}`"
         else:
             user_info += "**User Gbanned** : `False`"
         await msg.edit_or_send_as_file(text=user_info, disable_web_page_preview=True)

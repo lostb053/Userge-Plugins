@@ -18,3 +18,4 @@ geopy
 prettytable
 newspaper3k
 pydub
+pyfiglet
