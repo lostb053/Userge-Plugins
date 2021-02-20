@@ -294,7 +294,10 @@ async def lastfm_compat_(message: Message):
     if not message.input_str:
         return await message.edit("Please check `{tr}help Compat`")
     diff = "|" in message.input_str
-    us1, us2 = message.input_str.split("|") if diff else Config.LASTFM_USERNAME, message.input_str
+    us1, us2 = (
+        message.input_str.split("|") if diff else Config.LASTFM_USERNAME,
+        message.input_str,
+    )
     display = f"**{us1 if diff else await user()}** and **[{us2}]({du}{us2})**"
     params = {
         "method": "user.getTopArtists",
