@@ -190,7 +190,6 @@ async def last_fm_loved_tracks_(message: Message):
 async def last_fm_played_(message: Message):
     """Shows Recently Played Songs"""
     query = message.input_str or Config.LASTFM_USERNAME
-    qd = f"[{query}]({du}{query})" if message.input_str else await user()
     params = {
         "method": "user.getrecenttracks",
         "limit": 20,
@@ -202,6 +201,7 @@ async def last_fm_played_(message: Message):
     recent_song = (await get_response(params))[1]["recenttracks"]["track"]
     if len(recent_song) == 0:
         return await message.err("No Recent Tracks found", del_in=5)
+    qd = f"[{query}]({du}{query})" if message.input_str else await user()
     rep = f"**{qd}** recently played 🎵 songs:\n"
     for song_ in recent_song:
         song_name = song_["name"]
