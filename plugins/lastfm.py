@@ -77,7 +77,7 @@ async def last_fm_(message: Message):
         img = recent_song[0].get("image")[3].get("#text")
         if img in ripimg():
             img = rand(pcurl())
-        rep = f"""[\u200c]({img})**{qd}** is currently listening to:\n"
+        rep = f"""[\u200c]({img})**{qd}** is currently listening to:\n
 🎧  <code>{artist_name} - {song_name}</code>"""
         rep += ", ♥️" if song_["loved"] != "0" else ""
         rep += f"\n#{neutags}" if neutags != "" else ""
