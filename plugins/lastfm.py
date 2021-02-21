@@ -46,7 +46,7 @@ async def toggle_lastfm_profile_(message: Message):
 async def last_fm_(message: Message):
     """Currently Playing"""
     query = message.input_str or Config.LASTFM_USERNAME
-    params={
+    params = {
         "method": "user.getrecenttracks",
         "user": query,
         "limit": 3,
@@ -63,7 +63,7 @@ async def last_fm_(message: Message):
         song_ = recent_song[0]
         song_name = song_["name"]
         artist_name = song_["artist"]["name"]
-        tgparam={
+        tgparam = {
             "method": "track.getInfo",
             "track": song_name,
             "artist": artist_name,
@@ -103,7 +103,7 @@ async def last_fm_(message: Message):
 async def last_fm_user_info_(message: Message):
     """Shows User Info"""
     query = message.input_str or Config.LASTFM_USERNAME
-    params={
+    params = {
         "method": "user.getInfo",
         "user": query,
         "api_key": Config.LASTFM_API_KEY,
@@ -133,7 +133,7 @@ async def last_fm_user_info_(message: Message):
 async def last_pc_(message: Message):
     """Shows Playcount"""
     query = message.input_str or Config.LASTFM_USERNAME
-    params={
+    params = {
         "method": "user.getInfo",
         "user": query,
         "api_key": Config.LASTFM_API_KEY,
@@ -157,7 +157,7 @@ async def last_pc_(message: Message):
 async def last_fm_loved_tracks_(message: Message):
     """Shows Liked Songs"""
     query = message.input_str or Config.LASTFM_USERNAME
-    params={
+    params = {
         "method": "user.getlovedtracks",
         "limit": 20,
         "user": query,
@@ -186,7 +186,7 @@ async def last_fm_loved_tracks_(message: Message):
 async def last_fm_played_(message: Message):
     """Shows Recently Played Songs"""
     query = message.input_str or Config.LASTFM_USERNAME
-    params={
+    params = {
         "method": "user.getrecenttracks",
         "limit": 20,
         "extended": 1,
@@ -217,7 +217,7 @@ async def last_fm_played_(message: Message):
 async def last_fm_love_(message: Message):
     """Loves Currently Playing Song"""
     await message.edit("Loving Currently Playing...")
-    params={
+    params = {
         "method": "user.getrecenttracks",
         "limit": 2,
         "user": Config.LASTFM_USERNAME,
@@ -249,7 +249,7 @@ async def last_fm_love_(message: Message):
 async def last_fm_unlove_(message: Message):
     """UnLoves Currently Playing Song"""
     await message.edit("UnLoving Currently Playing...")
-    params={
+    params = {
         "method": "user.getrecenttracks",
         "limit": 2,
         "user": Config.LASTFM_USERNAME,
@@ -286,8 +286,8 @@ async def lastfm_compat_(message: Message):
     def UwU(name):
         params["user"] = name
         return params
-    
-    params={
+
+    params = {
         "method": "user.getTopArtists",
         "limit": 500,
         "api_key": Config.LASTFM_API_KEY,
