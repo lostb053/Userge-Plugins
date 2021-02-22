@@ -9,7 +9,7 @@
 import asyncio
 
 from userge import Config, Message, get_collection, userge
-from userge.lastfm import auth_, info, recs, ri, tglst, user
+from userge.lastfm import auth_, info, rand, recs, ripimg, tglst, user
 
 du = "https://last.fm/user/"
 
@@ -53,19 +53,21 @@ async def last_fm_(message: Message):
     qd = f"[{query}]({du}{query})" if message.input_str else await user()
     if recent_song[0].get("@attr"):
         song_ = recent_song[0]
-        sn, an = song_["name"], song_["artist"]["name"]
+        sn, an = song_["name"], song_["artist"]["#text"]
         gt = (await info("track", "", an, sn))[1]["track"]["toptags"]["tag"]
         y = [i.replace(" ", "_").replace("-", "_") for i in [tg["name"] for tg in gt]]
         z = [k for k in y if k.lower() in tglst()]
         neutags = " #".join(z[i] for i in range(min(len(z), 4)))
-        img = ri(recent_song[0])
+        img = recent_song[0].get("image")[3].get("#text")
+        if img in ripimg():
+            img = rand()
         rep = f"[\u200c]({img})**{qd}** is currently listening to: \n🎧  `{an} - {sn}`"
         rep += ", ♥️" if song_["loved"] != "0" else ""
         rep += f"\n#{neutags}" if neutags != "" else ""
     else:
         rep = f"**{qd}** was listening to ...\n"
         for song_ in recent_song:
-            song_name, artist_name = song_["name"], song_["artist"]["name"]
+            song_name, artist_name = song_["name"], song_["artist"]["#text"]
             rep += f"\n🎧  {artist_name} - {song_name}"
             rep += ", ♥️" if song_["loved"] != "0" else ""
         playcount = view_data.get("recenttracks").get("@attr").get("total")
@@ -149,7 +151,7 @@ async def last_fm_played_(message: Message):
     qd = f"[{query}]({du}{query})" if message.input_str else await user()
     rep = f"**{qd}**'s recently played 🎵 songs:\n"
     for song_ in recent_song:
-        song_name, artist_name = song_["name"], song_["artist"]["name"]
+        song_name, artist_name = song_["name"], song_["artist"]["#text"]
         rep += f"\n🎧  {artist_name} - {song_name}"
         rep += ", ♥️" if song_["loved"] != "0" else ""
     await message.edit(rep, disable_web_page_preview=True)
@@ -171,7 +173,9 @@ async def last_fm_love_(message: Message):
     song_ = recent_song[0]
     anm, snm = song_["artist"]["#text"], song_["name"]
     auth_().get_track(anm, snm).love()
-    img = ri(song_)
+    img = song_.get("image")[3].get("#text")
+    if img in ripimg():
+        img = rand()
     await message.edit(f"Loved currently playing track...\n`{anm} - {snm}` [\u200c]({img})")
 
 
@@ -191,7 +195,9 @@ async def last_fm_unlove_(message: Message):
     song_ = recent_song[0]
     anm, snm = song_["artist"]["#text"], song_["name"]
     auth_().get_track(anm, snm).unlove()
-    img = ri(song_)
+    img = song_.get("image")[3].get("#text")
+    if img in ripimg():
+        img = rand()
     await message.edit(f"UnLoved currently playing track...\n`{anm} - {snm}` [\u200c]({img})")
 
 
