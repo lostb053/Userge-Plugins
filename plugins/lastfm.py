@@ -7,9 +7,8 @@
 # Code re-written by code-rgb
 
 import asyncio
-
 from userge import Config, Message, get_collection, userge
-from userge.lastfm import auth_, info, rand, recs, ripimg, tglst, user
+from userge.lastfm import auth_, info, recs, ri, tglst, user
 
 du = "https://last.fm/user/"
 
@@ -58,9 +57,7 @@ async def last_fm_(message: Message):
         y = [i.replace(" ", "_").replace("-", "_") for i in [tg["name"] for tg in gt]]
         z = [k for k in y if k.lower() in tglst()]
         neutags = " #".join(z[i] for i in range(min(len(z), 4)))
-        img = recent_song[0].get("image")[3].get("#text")
-        if img in ripimg():
-            img = rand()
+        img = ri(recent_song[0].get("image")[3].get("#text"))
         rep = f"[\u200c]({img})**{qd}** is currently listening to: \n🎧  `{an} - {sn}`"
         rep += ", ♥️" if song_["loved"] != "0" else ""
         rep += f"\n#{neutags}" if neutags != "" else ""
@@ -173,9 +170,7 @@ async def last_fm_love_(message: Message):
     song_ = recent_song[0]
     anm, snm = song_["artist"]["#text"], song_["name"]
     auth_().get_track(anm, snm).love()
-    img = song_.get("image")[3].get("#text")
-    if img in ripimg():
-        img = rand()
+    img = ri(song_.get("image")[3].get("#text"))
     await message.edit(f"Loved currently playing track...\n`{anm} - {snm}` [\u200c]({img})")
 
 
@@ -195,9 +190,7 @@ async def last_fm_unlove_(message: Message):
     song_ = recent_song[0]
     anm, snm = song_["artist"]["#text"], song_["name"]
     auth_().get_track(anm, snm).unlove()
-    img = song_.get("image")[3].get("#text")
-    if img in ripimg():
-        img = rand()
+    img = ri(song_.get("image")[3].get("#text"))
     await message.edit(f"UnLoved currently playing track...\n`{anm} - {snm}` [\u200c]({img})")
 
 
