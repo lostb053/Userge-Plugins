@@ -5,6 +5,8 @@
 # Inspiration from @lastfmrobot <mainly> (owned by @dangou on telegram) and...
 # TheRealPhoenixBot owned by rsktg
 # Code re-written by code-rgb
+# UwU, Now i feel like i cant develop it anymore now, but i will appreciate it if you have some ideas
+# lostb053.github.io
 
 import asyncio
 from userge import Config, Message, get_collection, userge
