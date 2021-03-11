@@ -4,6 +4,7 @@ colour
 deezloader
 emoji-country-flag
 google
+google_trans_new
 glitch-this
 gtts
 humanize
