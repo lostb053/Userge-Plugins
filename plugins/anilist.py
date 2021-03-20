@@ -672,12 +672,6 @@ async def anime_search(message: Message):
         await message.err(f"[{error_sts}]")
         return
     data = result["data"]["Page"]["media"]
-    id = data.get("id")
-    idmal = data.get("idMal")
-    romaji = data["title"]["romaji"]
-    english = data["title"]["english"]
-    country = data.get("countryOfOrigin")
-    c_flag = cflag.flag(country)
     for i in range(lim):
         Sdata = data[i]
         id = Sdata.get("id")
