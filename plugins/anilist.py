@@ -109,6 +109,29 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
 }
 """
 
+LIST_ANIME = """
+query ($id: Int, $page: Int, $perPage: Int, $search: String) {
+    Page (page: $page, perPage: $perPage) {
+        pageInfo {
+            total
+            currentPage
+            lastPage
+            hasNextPage
+            perPage
+        }
+        media (id: $id, search: $search) {
+            id
+            idMal
+            title {
+                romaji
+                english
+            }
+            countryOfOrigin
+        }
+    }
+}
+"""
+
 AIRING_QUERY = """
 query ($id: Int, $mediaId: Int, $notYetAired: Boolean) {
   Page(page: 1, perPage: 50) {
@@ -621,3 +644,49 @@ async def view_del_ani(message: Message):
         await message.edit("Custom Anime Template deleted Successfully")
     if "-v" in message.flags:
         await message.edit(template["anime_data"])
+
+
+@userge.on_cmd(
+    "lsani",
+    about={
+        "header": "List Animes related to keyword",
+        "flags": {"-l": "no. of anime results"},
+        "usage": "{tr}anitemp query",
+    },
+)
+async def anime_search(message: Message):
+    """ Search Anime Info """
+    query = message.input_str
+    if not query:
+        await message.err("NameError: 'query' not defined")
+        return
+    lim = int(message.flags.get("-l", 5))
+    if lim > 15:
+        lim = 15
+    vars_ = {"search": query, "asHtml": True, "type": "ANIME", "page": 1, "perPage": lim}
+    result = await return_json_senpai(LIST_ANIME, vars_)
+    error = result.get("errors")
+    if error:
+        await CLOG.log(f"**ANILIST RETURNED FOLLOWING ERROR:**\n\n`{error}`")
+        error_sts = error[0].get("message")
+        await message.err(f"[{error_sts}]")
+        return
+    data = result["data"]["Page"]["media"]
+    id = data.get("id")
+    idmal = data.get("idMal")
+    romaji = data["title"]["romaji"]
+    english = data["title"]["english"]
+    country = data.get("countryOfOrigin")
+    c_flag = cflag.flag(country)
+    for i in range(lim):
+        Sdata = data[i]
+        id = Sdata.get("id")
+        idmal = Sdata.get("idMal")
+        romaji = Sdata["title"]["romaji"]
+        english = Sdata["title"]["english"]
+        country = Sdata.get("countryOfOrigin")
+        c_flag = cflag.flag(country)
+        out += f"**{romaji}**\n"
+        out += f"__{english}__\n" if english != None else ""
+        out += f"➤ID | MAL ID: `{id}|{idmal}`[{c_flag}]\n\n"
+    await message.reply(out)
