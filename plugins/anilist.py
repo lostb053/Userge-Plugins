@@ -672,6 +672,7 @@ async def anime_search(message: Message):
         await message.err(f"[{error_sts}]")
         return
     data = result["data"]["Page"]["media"]
+    out = ""
     for i in range(lim):
         Sdata = data[i]
         id = Sdata.get("id")
