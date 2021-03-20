@@ -689,4 +689,4 @@ async def anime_search(message: Message):
         out += f"**{romaji}**\n"
         out += f"__{english}__\n" if english != None else ""
         out += f"➤ID | MAL ID: `{id}|{idmal}`[{c_flag}]\n\n"
-    await message.reply(out)
+    await message.edit(out)
