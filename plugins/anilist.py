@@ -72,9 +72,6 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
       site
       thumbnail
     }
-    coverImage {
-      extraLarge
-    }
     bannerImage
     genres
     averageScore
@@ -282,7 +279,6 @@ async def anim_arch(message: Message):
     country = data.get("countryOfOrigin")
     c_flag = cflag.flag(country)
     source = data.get("source")
-    coverImg = data.get("coverImage")["extraLarge"]
     bannerImg = data.get("bannerImage")
     genres = data.get("genres")
     charlist = []
@@ -327,7 +323,7 @@ async def anim_arch(message: Message):
 
     url = data.get("siteUrl")
 
-    title_img = coverImg or bannerImg
+    title_img = f"https://img.anili.st/media/{idm}"
     # Telegraph Post mejik
     html_pc = ""
     html_pc += f"<img src='{title_img}' title={romaji}/>"
@@ -426,7 +422,7 @@ __{english}__
 Description: `{description}`
 
 Synonyms: `{synonyms}`
-For more info <a href=url>click here</a>
+For more info <a href='{url}'>click here</a>
 """
     await message.reply(finals_, disable_web_page_preview=True)
     await message.delete()
