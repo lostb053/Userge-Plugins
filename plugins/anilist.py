@@ -178,6 +178,28 @@ query ($search: String, $asHtml: Boolean) {
 }
 """
 
+MANGA_QUERY = """
+query ($search: String, $type: MediaType, $asHtml: Boolean) {) {
+    Media (search: $search, type: $type) {
+      id
+      title {
+        romaji
+        english
+        native
+      }
+      status
+      description(asHtml: true)
+      chapters
+      volumes
+      genres
+      synonyms
+      averageScore
+      siteUrl
+    }
+  }
+}
+"""
+
 
 async def _init():
     global ANIME_TEMPLATE  # pylint: disable=global-statement
@@ -340,6 +362,73 @@ async def anim_arch(message: Message):
         await message.reply_photo(title_img, caption=finals_)
     else:
         await message.reply(finals_)
+    await message.delete()
+
+
+@userge.on_cmd(
+    "manga",
+    about={
+        "header": "Manga Search",
+        "description": "Search for Manga using AniList API",
+        "usage": "{tr}manga [manga name]",
+        "examples": "{tr}manga Ao Haru Ride",
+    },
+)
+async def manga_arch(message: Message):
+    """ Search Manga Info """
+    query = message.input_str
+    if not query:
+        await message.err("NameError: 'query' not defined")
+        return
+    vars_ = {"search": query, "asHtml": True, "type": "MANGA"}
+    result = await return_json_senpai(MANGA_QUERY, vars_)
+    error = result.get("errors")
+    if error:
+        await CLOG.log(f"**ANILIST RETURNED FOLLOWING ERROR:**\n\n`{error}`")
+        error_sts = error[0].get("message")
+        await message.err(f"[{error_sts}]")
+        return
+
+    data = result["data"]["Media"]
+
+    # Data of all fields in returned json
+    # pylint: disable=possibly-unused-variable
+    idm = data.get("id")
+    romaji = data["title"]["romaji"]
+    english = data["title"]["english"]
+    native = data["title"]["native"]
+    status = data.get("status")
+    synopsis = data.get("description")
+    description = synopsis[:720]
+    if len(synopsis) > 720:
+      description += "..."
+    volumes = data.get("volumes")
+    chapters = data.get("chapters")
+    genres = data.get("genres")
+    synonyms = data.get("synonyms")
+    genre = genres[0]
+    if len(genres) != 1:
+        genre = ", ".join(genres)
+    score = data.get("averageScore")
+    url = data.get("siteUrl")
+    finals_ = f"""
+**{romaji}**
+__{english}__
+{native}
+
+➤ ID: `{idm}`
+➤ STATUS: `{status}`
+➤ VOLUMES: `{volumes}`
+➤ CHAPTERS: `{chapters}`
+➤ SCORE: `{score}`
+➤ GENRES: `{genres}`
+
+Description: `{description}`
+
+Synonyms: `{synonyms}`
+For more info <a href=url>click here</a>
+"""
+    await message.reply(finals_, disable_web_page_preview=True)
     await message.delete()
 
 
