@@ -174,7 +174,7 @@ query ($search: String, $asHtml: Boolean) {
 """
 
 MANGA_QUERY = """
-query ($search: String, $type: MediaType, $asHtml: Boolean) {
+query ($search: String, $type: MediaType) {
     Media (search: $search, type: $type) {
         id
         title {
