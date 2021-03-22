@@ -22,20 +22,18 @@ from userge.utils import post_to_telegraph as post_to_tp
 CLOG = userge.getCLogger(__name__)
 
 # Default templates for Query Formatting
-ANIME_TEMPLATE = """[{c_flag}]**{romaji}**
-        __{english}__
-        {native}
+ANIME_TEMPLATE = """{name}
 
 **ID | MAL ID:** `{idm}` | `{idmal}`
 ➤ **SOURCE:** `{source}`
 ➤ **TYPE:** `{formats}`
 ➤ **GENRES:** `{genre}`
 ➤ **SEASON:** `{season}`
+➤ **RELEASE YEAR:** `{yr}`
 ➤ **EPISODES:** `{episodes}`
 ➤ **DURATION:** `{duration} min/ep`
 ➤ **CHARACTERS:** `{chrctrs}`
-➤ **STATUS:** `{status}`
-➤ **NEXT AIRING:** `{air_on}`
+{status_air}
 ➤ **SCORE:** `{score}%` 🌟
 ➤ **ADULT RATED:** `{adult}`
 🎬 {trailer_link}
@@ -46,63 +44,63 @@ SAVED = get_collection("TEMPLATES")
 # GraphQL Queries.
 ANIME_QUERY = """
 query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean) {
-  Media (id: $id, idMal: $idMal, search: $search, type: $type) {
-    id
-    idMal
-    title {
-      romaji
-      english
-      native
-    }
-    format
-    status
-    description (asHtml: $asHtml)
-    startDate {
-      year
-      month
-      day
-    }
-    season
-    episodes
-    duration
-    countryOfOrigin
-    source (version: 2)
-    trailer {
-      id
-      site
-      thumbnail
-    }
-    bannerImage
-    genres
-    averageScore
-    nextAiringEpisode {
-      airingAt
-      timeUntilAiring
-      episode
-    }
-    isAdult
-    characters (role: MAIN, page: 1, perPage: 10) {
-      nodes {
+    Media (id: $id, idMal: $idMal, search: $search, type: $type) {
         id
-        name {
-          full
-          native
+        idMal
+        title {
+            romaji
+            english
+            native
         }
-        image {
-          large
-        }
+        format
+        status
         description (asHtml: $asHtml)
+        startDate {
+            year
+            month
+            day
+        }
+        season
+        episodes
+        duration
+        countryOfOrigin
+        source (version: 2)
+        trailer {
+          id
+          site
+          thumbnail
+        }
+        bannerImage
+        genres
+        averageScore
+        nextAiringEpisode {
+            airingAt
+            timeUntilAiring
+            episode
+        }
+        isAdult
+        characters (role: MAIN, page: 1, perPage: 10) {
+            nodes {
+                id
+                name {
+                    full
+                    native
+                }
+                image {
+                    large
+                }
+                description (asHtml: $asHtml)
+                siteUrl
+            }
+        }
+        studios (isMain: true) {
+            nodes {
+                name
+                siteUrl
+            }
+        }
         siteUrl
-      }
     }
-    studios (isMain: true) {
-      nodes {
-        name
-        siteUrl
-      }
-    }
-    siteUrl
-  }
 }
 """
 
@@ -176,24 +174,25 @@ query ($search: String, $asHtml: Boolean) {
 """
 
 MANGA_QUERY = """
-query ($search: String, $type: MediaType, $asHtml: Boolean) {) {
+query ($search: String, $type: MediaType, $asHtml: Boolean) {
     Media (search: $search, type: $type) {
-      id
-      title {
-        romaji
-        english
-        native
-      }
-      status
-      description(asHtml: true)
-      chapters
-      volumes
-      genres
-      synonyms
-      averageScore
-      siteUrl
+        id
+        title {
+            romaji
+            english
+            native
+        }
+        format
+        countryOfOrigin
+        source (version: 2)
+        status
+        description(asHtml: true)
+        chapters
+        volumes
+        genres
+        averageScore
+        siteUrl
     }
-  }
 }
 """
 
@@ -266,9 +265,7 @@ async def anim_arch(message: Message):
     idm = data.get("id")
     idmal = data.get("idMal")
     romaji = data["title"]["romaji"]
-    english = (
-        data["title"]["english"] if data["title"]["english"] is not None else "--------"
-    )
+    english = data["title"]["english"]
     native = data["title"]["native"]
     formats = data.get("format")
     status = data.get("status")
@@ -278,6 +275,13 @@ async def anim_arch(message: Message):
     duration = data.get("duration")
     country = data.get("countryOfOrigin")
     c_flag = cflag.flag(country)
+    if data["title"]["english"] is not None:
+        name = f'''[{c_flag}]**romaji**
+        __{english}__
+        {native}'''
+    else:
+        name = f'''[{c_flag}]**romaji**
+        {native}'''
     source = data.get("source")
     bannerImg = data.get("bannerImage")
     genres = data.get("genres")
@@ -295,7 +299,12 @@ async def anim_arch(message: Message):
         nextAir = data["nextAiringEpisode"]["airingAt"]
         air_on = make_it_rw(nextAir)
         air_on += f" | {data['nextAiringEpisode']['episode']}th eps"
+    if status=="FINISHED":
+        status_air = f"➤ **STATUS:** `{status}`"
+    else:
+        status_air = f"➤ **STATUS:** `{status}`\n➤ **NEXT AIRING:** `{air_on}`"
     s_date = data.get("startDate")
+    yr = s_date["year"]
     adult = data.get("isAdult")
     trailer_link = "N/A"
 
@@ -401,29 +410,34 @@ async def manga_arch(message: Message):
     volumes = data.get("volumes")
     chapters = data.get("chapters")
     genres = data.get("genres")
-    synonyms = data.get("synonyms")
     genre = genres[0]
     if len(genres) != 1:
         genre = ", ".join(genres)
     score = data.get("averageScore")
     url = data.get("siteUrl")
-    finals_ = f"""
-**{romaji}**
-__{english}__
-{native}
+    format_ = data.get("format")
+    country = data.get("countryOfOrigin")
+    source = data.get("source")
+    c_flag = cflag.flag(country)
 
-➤ ID: `{idm}`
-➤ STATUS: `{status}`
-➤ VOLUMES: `{volumes}`
-➤ CHAPTERS: `{chapters}`
-➤ SCORE: `{score}`
-➤ GENRES: `{genres}`
-
-Description: `{description}`
-
-Synonyms: `{synonyms}`
-For more info <a href='{url}'>click here</a>
-"""
+    name = f"""[{c_flag}]**{romaji}**
+        __{english}__
+        {native}"""
+    if english==None:
+        name = f"""[{c_flag}]**{romaji}**
+        {native}"""
+    finals_ = f"{name}"
+    finals_ += f"➤ ID: `{idm}`\n"
+    finals_ += f"➤ STATUS: `{status}`\n"
+    finals_ += f"➤ VOLUMES: `{volumes}`\n"
+    finals_ += f"➤ CHAPTERS: `{chapters}`\n"
+    finals_ += f"➤ SCORE: `{score}`\n"
+    finals_ += f"➤ GENRES: `{genres}`\n"
+    finals_ += f"➤ FORMAT: `{format_}`\n"
+    finals_ += f"➤ SOURCE: `{source}`\n\n"
+    finals_ += f"Description: `{description}`\n\n"
+    finals_ += f"For more info <a href='{url}'>click here</a>"
+    
     await message.reply(finals_, disable_web_page_preview=True)
     await message.delete()
 
