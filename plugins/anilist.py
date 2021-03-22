@@ -432,7 +432,7 @@ async def manga_arch(message: Message):
     finals_ += f"➤ **VOLUMES:** `{volumes}`\n"
     finals_ += f"➤ **CHAPTERS:** `{chapters}`\n"
     finals_ += f"➤ **SCORE:** `{score}`\n"
-    finals_ += f"➤ **GENRES:** `{genres}`\n"
+    finals_ += f"➤ **GENRES:** `{genre}`\n"
     finals_ += f"➤ **FORMAT:** `{format_}`\n"
     finals_ += f"➤ **SOURCE:** `{source}`\n\n"
     finals_ += f"Description: `{description}`\n\n"
