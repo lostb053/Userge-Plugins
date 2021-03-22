@@ -276,11 +276,11 @@ async def anim_arch(message: Message):
     country = data.get("countryOfOrigin")
     c_flag = cflag.flag(country)
     if data["title"]["english"] is not None:
-        name = f'''[{c_flag}]**romaji**
+        name = f'''[{c_flag}]**{romaji}**
         __{english}__
         {native}'''
     else:
-        name = f'''[{c_flag}]**romaji**
+        name = f'''[{c_flag}]**{romaji}**
         {native}'''
     source = data.get("source")
     bannerImg = data.get("bannerImage")
@@ -426,19 +426,19 @@ async def manga_arch(message: Message):
     if english==None:
         name = f"""[{c_flag}]**{romaji}**
         {native}"""
-    finals_ = f"{name}"
-    finals_ += f"➤ ID: `{idm}`\n"
-    finals_ += f"➤ STATUS: `{status}`\n"
-    finals_ += f"➤ VOLUMES: `{volumes}`\n"
-    finals_ += f"➤ CHAPTERS: `{chapters}`\n"
-    finals_ += f"➤ SCORE: `{score}`\n"
-    finals_ += f"➤ GENRES: `{genres}`\n"
-    finals_ += f"➤ FORMAT: `{format_}`\n"
-    finals_ += f"➤ SOURCE: `{source}`\n\n"
+    finals_ = f"{name}\n\n"
+    finals_ += f"➤ **ID:** `{idm}`\n"
+    finals_ += f"➤ **STATUS:** `{status}`\n"
+    finals_ += f"➤ **VOLUMES:** `{volumes}`\n"
+    finals_ += f"➤ **CHAPTERS:** `{chapters}`\n"
+    finals_ += f"➤ **SCORE:** `{score}`\n"
+    finals_ += f"➤ **GENRES:** `{genres}`\n"
+    finals_ += f"➤ **FORMAT:** `{format_}`\n"
+    finals_ += f"➤ **SOURCE:** `{source}`\n\n"
     finals_ += f"Description: `{description}`\n\n"
     finals_ += f"For more info <a href='{url}'>click here</a>"
-    
-    await message.reply(finals_, disable_web_page_preview=True)
+    pic = f"https://img.anili.st/media/{idm}"
+    await message.reply_photo(pic, caption=finals_)
     await message.delete()
 
 
