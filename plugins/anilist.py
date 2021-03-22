@@ -592,10 +592,19 @@ async def character_search(message: Message):
     description = data["description"]
     featured = data["media"]["nodes"]
     snin = "\n"
+    sninm = "  `MANGAS`\n"
+    snina = "  `ANIMES`\n"
     for ani in featured:
         k = ani["title"]["english"] or ani["title"]["romaji"]
         kk = ani["type"]
-        snin += f"    • {k} <code>[{kk}]</code> \n"
+        if kk=="MANGA":
+            sninm += f"    • {k}\n"
+    for ani in featured:
+        kkk = ani["title"]["english"] or ani["title"]["romaji"]
+        kkkk = ani["type"]
+        if kkkk=="ANIME":
+            snina += f"    • {kkk}\n"
+    snin = f"\n{snina}\n\n{sninm}"
     sp = 0
     cntnt = ""
     for cf in featured:
