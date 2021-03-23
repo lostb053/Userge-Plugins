@@ -604,7 +604,7 @@ async def character_search(message: Message):
         kkkk = ani["type"]
         if kkkk=="ANIME":
             snina += f"    • {kkk}\n"
-    snin = f"\n{snina}\n\n{sninm}"
+    snin = f"\n{snina}\n{sninm}"
     sp = 0
     cntnt = ""
     for cf in featured:
