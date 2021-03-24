@@ -26,8 +26,7 @@ ANIME_TEMPLATE = """{name}
 
 **ID | MAL ID:** `{idm}` | `{idmal}`
 ➤ **SOURCE:** `{source}`
-➤ **TYPE:** `{formats}`
-{genrels}
+➤ **TYPE:** `{formats}`{genrels}
 ➤ **SEASON:** `{season}`
 ➤ **RELEASE YEAR:** `{yr}`
 ➤ **EPISODES:** `{episodes}`
@@ -294,7 +293,9 @@ async def anim_arch(message: Message):
         genre = genres[0]
         if len(genres) != 1:
             genre = ", ".join(genres)
-        genrels = f"➤ **GENRES:** `{genre}`"
+        genrels = f"\n➤ **GENRES:** `{genre}`"
+    else:
+        genrels = ""
     score = data.get("averageScore")
     air_on = None
     if data["nextAiringEpisode"]:
