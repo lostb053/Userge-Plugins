@@ -27,12 +27,11 @@ ANIME_TEMPLATE = """{name}
 **ID | MAL ID:** `{idm}` | `{idmal}`
 ➤ **SOURCE:** `{source}`
 ➤ **TYPE:** `{formats}`
-➤ **GENRES:** `{genre}`
+{genrels}
 ➤ **SEASON:** `{season}`
 ➤ **RELEASE YEAR:** `{yr}`
 ➤ **EPISODES:** `{episodes}`
-➤ **DURATION:** `{duration} min/ep`
-➤ **CHARACTERS:** `{chrctrs}`
+➤ **DURATION:** `{duration} min/ep`{chrctrsls}
 {status_air}
 ➤ **SCORE:** `{score}%` 🌟
 ➤ **ADULT RATED:** `{adult}`
@@ -290,9 +289,12 @@ async def anim_arch(message: Message):
         charlist.append(f"    •{char['name']['full']}")
     chrctrs = "\n"
     chrctrs += ("\n").join(charlist[:10])
-    genre = genres[0]
-    if len(genres) != 1:
-        genre = ", ".join(genres)
+    chrctrsls = f"\n➤ **CHARACTERS:** `{chrctrs}`" if len(charlist)!=0 else ""
+    if genres!=[]:
+        genre = genres[0]
+        if len(genres) != 1:
+            genre = ", ".join(genres)
+        genrels = f"➤ **GENRES:** `{genre}`"
     score = data.get("averageScore")
     air_on = None
     if data["nextAiringEpisode"]:
@@ -592,19 +594,22 @@ async def character_search(message: Message):
     description = data["description"]
     featured = data["media"]["nodes"]
     snin = "\n"
-    sninm = "  `MANGAS`\n"
-    snina = "  `ANIMES`\n"
+    sninal = ""
+    sninml = ""
     for ani in featured:
         k = ani["title"]["english"] or ani["title"]["romaji"]
         kk = ani["type"]
         if kk=="MANGA":
-            sninm += f"    • {k}\n"
+            sninml += f"    • {k}\n"
     for ani in featured:
         kkk = ani["title"]["english"] or ani["title"]["romaji"]
         kkkk = ani["type"]
         if kkkk=="ANIME":
-            snina += f"    • {kkk}\n"
-    snin = f"\n{snina}\n{sninm}"
+            sninal += f"    • {kkk}\n"
+    sninal += "\n"
+    sninm = "  `MANGAS`\n" if len(sninml)!=0 else ""
+    snina = "  `ANIMES`\n" if len(sninal)!=0 else ""
+    snin = f"\n{snina}{sninal}{sninm}{sninml}"
     sp = 0
     cntnt = ""
     for cf in featured:
