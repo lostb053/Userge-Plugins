@@ -35,7 +35,9 @@ ANIME_TEMPLATE = """{name}
 ➤ **SCORE:** `{score}%` 🌟
 ➤ **ADULT RATED:** `{adult}`
 🎬 {trailer_link}
-📖 [Synopsis & More]({synopsis_link})"""
+📖 [Synopsis & More]({synopsis_link})
+
+{additional}"""
 
 SAVED = get_collection("TEMPLATES")
 
@@ -67,6 +69,18 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
           id
           site
           thumbnail
+        }
+        relations {
+            edges {
+                nodes {
+                    title {
+                        romaji
+                        english
+                    }
+                }
+                id
+                relationType
+            }
         }
         bannerImage
         genres
@@ -281,6 +295,16 @@ async def anim_arch(message: Message):
         name = f'''[{c_flag}]**{romaji}**
         {native}'''
     source = data.get("source")
+    prqlsql = data.get("relations").get('edges')
+    prql = ""
+    sql = ""
+    for i in prqlsql:
+        if i['relationType']=="SEQUEL":
+            prql += f"Prequel: `{i['node']['title']['english' or 'romaji']}`\n"
+    for i in prqlsql:
+        if i['relationType']=="PREQUEL":
+            sql += f"Sequel: `{i['node']['title']['english' or 'romaji']}`\n"
+    additional = f"{prql}{sql}"
     bannerImg = data.get("bannerImage")
     genres = data.get("genres")
     charlist = []
