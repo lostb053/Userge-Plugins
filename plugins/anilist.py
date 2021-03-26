@@ -299,10 +299,10 @@ async def anim_arch(message: Message):
     prql = ""
     sql = ""
     for i in prqlsql:
-        if i['relationType']=="SEQUEL":
+        if i['relationType']=="PREQUEL":
             prql += f"Prequel: `{i['node']['title']['english' or 'romaji']}`\n"
     for i in prqlsql:
-        if i['relationType']=="PREQUEL":
+        if i['relationType']=="SEQUEL":
             sql += f"Sequel: `{i['node']['title']['english' or 'romaji']}`\n"
     additional = f"{prql}{sql}"
     bannerImg = data.get("bannerImage")
