@@ -72,7 +72,7 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
         }
         relations {
             edges {
-                nodes {
+                node {
                     title {
                         romaji
                         english
