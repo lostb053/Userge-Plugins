@@ -735,7 +735,16 @@ async def get_ani(vars_):
     if data["nextAiringEpisode"]:
         nextAir = data["nextAiringEpisode"]["airingAt"]
         air_on = make_it_rw(nextAir)
-        air_on += f" | {data['nextAiringEpisode']['episode']}th eps"
+        ep_ = data['nextAiringEpisode']['episode']
+        if ep_=="1":
+            th = "st"
+        elif ep_=="2":
+            th = "nd"
+        elif ep_=="3":
+            th = "rd"
+        else:
+            th = "th"
+        air_on += f" | {ep_}{th} eps"
     if status=="FINISHED":
         status_air = f"➤ **STATUS:** `{status}`"
     else:
