@@ -14,8 +14,10 @@ import flag as cflag
 import humanize
 import tracemoepy
 from aiohttp import ClientSession
+from pyrogram import filters
+from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from userge import Message, get_collection, userge
-from userge.utils import media_to_image
+from userge.utils import media_to_image, check_owner
 from userge.utils import post_to_telegraph as post_to_tp
 
 # Logging Errors
@@ -77,8 +79,8 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
                         romaji
                         english
                     }
+                    id
                 }
-                id
                 relationType
             }
         }
@@ -261,139 +263,40 @@ async def anim_arch(message: Message):
         vars_ = {"id": int(query), "asHtml": True, "type": "ANIME"}
         if "-mid" in message.flags:
             vars_ = {"idMal": int(query), "asHtml": True, "type": "ANIME"}
-
-    result = await return_json_senpai(ANIME_QUERY, vars_)
-    error = result.get("errors")
-    if error:
-        await CLOG.log(f"**ANILIST RETURNED FOLLOWING ERROR:**\n\n`{error}`")
-        error_sts = error[0].get("message")
-        await message.err(f"[{error_sts}]")
-        return
-
-    data = result["data"]["Media"]
-
-    # Data of all fields in returned json
-    # pylint: disable=possibly-unused-variable
-    idm = data.get("id")
-    idmal = data.get("idMal")
-    romaji = data["title"]["romaji"]
-    english = data["title"]["english"]
-    native = data["title"]["native"]
-    formats = data.get("format")
-    status = data.get("status")
-    synopsis = data.get("description")
-    season = data.get("season")
-    episodes = data.get("episodes")
-    duration = data.get("duration")
-    country = data.get("countryOfOrigin")
-    c_flag = cflag.flag(country)
-    if data["title"]["english"] is not None:
-        name = f'''[{c_flag}]**{romaji}**
-        __{english}__
-        {native}'''
+    result = await get_ani(vars_)
+    if len(result)!=1:
+        title_img, finals_ = result[0], result[1]
     else:
-        name = f'''[{c_flag}]**{romaji}**
-        {native}'''
-    source = data.get("source")
-    prqlsql = data.get("relations").get('edges')
-    prql = ""
-    sql = ""
-    for i in prqlsql:
-        if i['relationType']=="PREQUEL":
-            prql += f"Prequel: `{i['node']['title']['english' or 'romaji']}`\n"
-    for i in prqlsql:
-        if i['relationType']=="SEQUEL":
-            sql += f"Sequel: `{i['node']['title']['english' or 'romaji']}`\n"
-    additional = f"{prql}{sql}"
-    bannerImg = data.get("bannerImage")
-    genres = data.get("genres")
-    charlist = []
-    for char in data["characters"]["nodes"]:
-        charlist.append(f"    •{char['name']['full']}")
-    chrctrs = "\n"
-    chrctrs += ("\n").join(charlist[:10])
-    chrctrsls = f"\n➤ **CHARACTERS:** `{chrctrs}`" if len(charlist)!=0 else ""
-    if genres!=[]:
-        genre = genres[0]
-        if len(genres) != 1:
-            genre = ", ".join(genres)
-        genrels = f"\n➤ **GENRES:** `{genre}`"
+        return await message.err(result[0])
+    buttons = []
+    if result[2]=="None":
+        if result[3]!="None":
+            buttons.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")])
+        else:
+            if len(finals_) <= 1023:
+                await message.reply_photo(title_img, caption=finals_)
+            else:
+                await message.reply(finals_)
+            await message.delete()
+            return
     else:
-        genrels = ""
-    score = data.get("averageScore")
-    air_on = None
-    if data["nextAiringEpisode"]:
-        nextAir = data["nextAiringEpisode"]["airingAt"]
-        air_on = make_it_rw(nextAir)
-        air_on += f" | {data['nextAiringEpisode']['episode']}th eps"
-    if status=="FINISHED":
-        status_air = f"➤ **STATUS:** `{status}`"
-    else:
-        status_air = f"➤ **STATUS:** `{status}`\n➤ **NEXT AIRING:** `{air_on}`"
-    s_date = data.get("startDate")
-    yr = s_date["year"]
-    adult = data.get("isAdult")
-    trailer_link = "N/A"
-
-    if data["trailer"] and data["trailer"]["site"] == "youtube":
-        trailer_link = f"[Trailer](https://youtu.be/{data['trailer']['id']})"
-    html_char = ""
-    for character in data["characters"]["nodes"]:
-        html_ = ""
-        html_ += "<br>"
-        html_ += f"""<a href="{character['siteUrl']}">"""
-        html_ += f"""<img src="{character['image']['large']}"/></a>"""
-        html_ += "<br>"
-        html_ += f"<h3>{character['name']['full']}</h3>"
-        html_ += f"<em>{c_flag} {character['name']['native']}</em><br>"
-        html_ += f"<b>Character ID</b>: {character['id']}<br>"
-        html_ += (
-            f"<h4>About Character and Role:</h4>{character.get('description', 'N/A')}"
-        )
-        html_char += f"{html_}<br><br>"
-
-    studios = "".join(
-        "<a href='{}'>• {}</a> ".format(studio["siteUrl"], studio["name"])
-        for studio in data["studios"]["nodes"]
-    )
-
-    url = data.get("siteUrl")
-
-    title_img = f"https://img.anili.st/media/{idm}"
-    # Telegraph Post mejik
-    html_pc = ""
-    html_pc += f"<img src='{title_img}' title={romaji}/>"
-    html_pc += f"<h1>[{c_flag}] {native}</h1>"
-    html_pc += "<h3>Synopsis:</h3>"
-    html_pc += synopsis
-    html_pc += "<br>"
-    if html_char:
-        html_pc += "<h2>Main Characters:</h2>"
-        html_pc += html_char
-        html_pc += "<br><br>"
-    html_pc += "<h3>More Info:</h3>"
-    html_pc += f"<b>Started On:</b> {s_date['day']}/{s_date['month']}/{s_date['year']}"
-    html_pc += f"<br><b>Studios:</b> {studios}<br>"
-    html_pc += f"<a href='https://myanimelist.net/anime/{idmal}'>View on MAL</a>"
-    html_pc += f"<a href='{url}'> View on anilist.co</a>"
-    html_pc += f"<img src='{bannerImg}'/>"
-
-    title_h = english or romaji
-    synopsis_link = post_to_tp(title_h, html_pc)
-    try:
-        finals_ = ANIME_TEMPLATE.format(**locals())
-    except KeyError as kys:
-        await message.err(kys)
-        return
-
+        if result[3]!="None":
+            buttons.append(
+                [
+                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}"),
+                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")
+                ]
+            )
+        else:
+            buttons.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
     if "-wp" in message.flags:
         finals_ = f"[\u200b]({title_img}) {finals_}"
         await message.edit(finals_)
         return
     if len(finals_) <= 1023:
-        await message.reply_photo(title_img, caption=finals_)
+        await message.reply_photo(title_img, caption=finals_, reply_markup=InlineKeyboardMarkup(buttons))
     else:
-        await message.reply(finals_)
+        await message.reply(finals_, reply_markup=InlineKeyboardMarkup(buttons))
     await message.delete()
 
 
@@ -759,3 +662,166 @@ async def view_del_ani(message: Message):
         await message.edit("Custom Anime Template deleted Successfully")
     if "-v" in message.flags:
         await message.edit(template["anime_data"])
+
+
+async def get_ani(vars_):
+    result = await return_json_senpai(ANIME_QUERY, vars_)
+    error = result.get("errors")
+    if error:
+        await CLOG.log(f"**ANILIST RETURNED FOLLOWING ERROR:**\n\n`{error}`")
+        error_sts = error[0].get("message")
+        return [f"[{error_sts}]"]
+
+    data = result["data"]["Media"]
+
+    # Data of all fields in returned json
+    # pylint: disable=possibly-unused-variable
+    idm = data.get("id")
+    idmal = data.get("idMal")
+    romaji = data["title"]["romaji"]
+    english = data["title"]["english"]
+    native = data["title"]["native"]
+    formats = data.get("format")
+    status = data.get("status")
+    synopsis = data.get("description")
+    season = data.get("season")
+    episodes = data.get("episodes")
+    duration = data.get("duration")
+    country = data.get("countryOfOrigin")
+    c_flag = cflag.flag(country)
+    if data["title"]["english"] is not None:
+        name = f'''[{c_flag}]**{romaji}**
+        __{english}__
+        {native}'''
+    else:
+        name = f'''[{c_flag}]**{romaji}**
+        {native}'''
+    source = data.get("source")
+    prqlsql = data.get("relations").get('edges')
+    prql = ""
+    prql_id = ""
+    sql = ""
+    sql_id = ""
+    for i in prqlsql:
+        if i['relationType']=="PREQUEL":
+            prql += f"Prequel: `{i['node']['title']['english' or 'romaji']}`\n"
+            prql_id += f"{i['node']['id']}"
+    for i in prqlsql:
+        if i['relationType']=="SEQUEL":
+            sql += f"Sequel: `{i['node']['title']['english' or 'romaji']}`\n"
+            sql_id += f"{i['node']['id']}"
+    if prql_id=="":
+        prql_id += "None"
+    if sql_id=="":
+        sql_id += "None"
+    additional = f"{prql}{sql}"
+    bannerImg = data.get("bannerImage")
+    genres = data.get("genres")
+    charlist = []
+    for char in data["characters"]["nodes"]:
+        charlist.append(f"    •{char['name']['full']}")
+    chrctrs = "\n"
+    chrctrs += ("\n").join(charlist[:10])
+    chrctrsls = f"\n➤ **CHARACTERS:** `{chrctrs}`" if len(charlist)!=0 else ""
+    if genres!=[]:
+        genre = genres[0]
+        if len(genres) != 1:
+            genre = ", ".join(genres)
+        genrels = f"\n➤ **GENRES:** `{genre}`"
+    else:
+        genrels = ""
+    score = data.get("averageScore")
+    air_on = None
+    if data["nextAiringEpisode"]:
+        nextAir = data["nextAiringEpisode"]["airingAt"]
+        air_on = make_it_rw(nextAir)
+        air_on += f" | {data['nextAiringEpisode']['episode']}th eps"
+    if status=="FINISHED":
+        status_air = f"➤ **STATUS:** `{status}`"
+    else:
+        status_air = f"➤ **STATUS:** `{status}`\n➤ **NEXT AIRING:** `{air_on}`"
+    s_date = data.get("startDate")
+    yr = s_date["year"]
+    adult = data.get("isAdult")
+    trailer_link = "N/A"
+
+    if data["trailer"] and data["trailer"]["site"] == "youtube":
+        trailer_link = f"[Trailer](https://youtu.be/{data['trailer']['id']})"
+    html_char = ""
+    for character in data["characters"]["nodes"]:
+        html_ = ""
+        html_ += "<br>"
+        html_ += f"""<a href="{character['siteUrl']}">"""
+        html_ += f"""<img src="{character['image']['large']}"/></a>"""
+        html_ += "<br>"
+        html_ += f"<h3>{character['name']['full']}</h3>"
+        html_ += f"<em>{c_flag} {character['name']['native']}</em><br>"
+        html_ += f"<b>Character ID</b>: {character['id']}<br>"
+        html_ += (
+            f"<h4>About Character and Role:</h4>{character.get('description', 'N/A')}"
+        )
+        html_char += f"{html_}<br><br>"
+
+    studios = "".join(
+        "<a href='{}'>• {}</a> ".format(studio["siteUrl"], studio["name"])
+        for studio in data["studios"]["nodes"]
+    )
+
+    url = data.get("siteUrl")
+
+    title_img = f"https://img.anili.st/media/{idm}"
+    # Telegraph Post mejik
+    html_pc = ""
+    html_pc += f"<img src='{title_img}' title={romaji}/>"
+    html_pc += f"<h1>[{c_flag}] {native}</h1>"
+    html_pc += f"<br><br><b>No. of Episodes:</b> {episodes}"
+    html_pc += f"<br><b>Duration:</b> {duration}"
+    html_pc += f"<br>{status_air}"
+    html_pc += f"<br>{additional}"
+    html_pc += "<h3>Synopsis:</h3>"
+    html_pc += synopsis
+    html_pc += "<br>"
+    if html_char:
+        html_pc += "<h2>Main Characters:</h2>"
+        html_pc += html_char
+        html_pc += "<br><br>"
+    html_pc += "<h3>More Info:</h3>"
+    html_pc += f"<b>Started On:</b> {s_date['day']}/{s_date['month']}/{s_date['year']}"
+    html_pc += f"<br><b>Studios:</b> {studios}<br>"
+    html_pc += f"<a href='https://myanimelist.net/anime/{idmal}'>View on MAL</a>"
+    html_pc += f"<a href='{url}'> View on anilist.co</a>"
+    html_pc += f"<img src='{bannerImg}'/>"
+
+    title_h = english or romaji
+    synopsis_link = post_to_tp(title_h, html_pc)
+    try:
+        finals_ = ANIME_TEMPLATE.format(**locals())
+    except KeyError as kys:
+        return [f"{kys}"]
+    return title_img, finals_, prql_id, sql_id, synopsis_link
+
+
+@userge.bot.on_callback_query(filters.regex(pattern=r"btn_(.*)"))
+@check_owner
+async def present_res(cq: CallbackQuery):
+    idm = cq.data.split("_")[1]
+    vars_ = {"id": int(idm), "asHtml": True, "type": "ANIME"}
+    result = await get_ani(vars_)
+    pic, msg = result[0], result[1]
+    btns = []
+    if result[2]=="None":
+        if result[3]!="None":
+            btns.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")])
+    else:
+        if result[3]!="None":
+            btns.append(
+                [
+                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}"),
+                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")
+                ]
+            )
+        else:
+            btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
+    if len(msg) >= 1023:
+        msg = f"[Click Here]({result[4]})"
+    await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
