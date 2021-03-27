@@ -691,7 +691,7 @@ async def get_ani(vars_):
         prql_id += "None"
     if sql_id=="":
         sql_id += "None"
-    additional = f"{prql}\n{sql}"
+    additional = f"{prql}{sql}"
     bannerImg = data.get("bannerImage")
     dura = f"\n➤ **DURATION:** `{duration} min/ep`" if duration!=None else ""
     charlist = []
