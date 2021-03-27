@@ -28,8 +28,7 @@ ANIME_TEMPLATE = """{name}
 
 **ID | MAL ID:** `{idm}` | `{idmal}`
 ➤ **SOURCE:** `{source}`
-➤ **TYPE:** `{formats}`
-{dura}{chrctrsls}
+➤ **TYPE:** `{formats}`{dura}{chrctrsls}
 {status_air}
 ➤ **ADULT RATED:** `{adult}`
 🎬 {trailer_link}
@@ -694,7 +693,7 @@ async def get_ani(vars_):
         sql_id += "None"
     additional = f"{prql}{sql}"
     bannerImg = data.get("bannerImage")
-    dura = f"➤ **DURATION:** `{duration} min/ep`" if duration!=None else ""
+    dura = f"\n➤ **DURATION:** `{duration} min/ep`" if duration!=None else ""
     charlist = []
     for char in data["characters"]["nodes"]:
         charlist.append(f"    •{char['name']['full']}")
