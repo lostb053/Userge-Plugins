@@ -28,13 +28,9 @@ ANIME_TEMPLATE = """{name}
 
 **ID | MAL ID:** `{idm}` | `{idmal}`
 ➤ **SOURCE:** `{source}`
-➤ **TYPE:** `{formats}`{genrels}
-➤ **SEASON:** `{season}`
-➤ **RELEASE YEAR:** `{yr}`
-➤ **EPISODES:** `{episodes}`
-➤ **DURATION:** `{duration} min/ep`{chrctrsls}
+➤ **TYPE:** `{formats}`
+{dura}{chrctrsls}
 {status_air}
-➤ **SCORE:** `{score}%` 🌟
 ➤ **ADULT RATED:** `{adult}`
 🎬 {trailer_link}
 📖 [Synopsis & More]({synopsis_link})
@@ -62,7 +58,6 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
             month
             day
         }
-        season
         episodes
         duration
         countryOfOrigin
@@ -85,8 +80,6 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
             }
         }
         bannerImage
-        genres
-        averageScore
         nextAiringEpisode {
             airingAt
             timeUntilAiring
@@ -203,7 +196,6 @@ query ($search: String, $type: MediaType) {
         description(asHtml: true)
         chapters
         volumes
-        genres
         averageScore
         siteUrl
     }
@@ -339,10 +331,6 @@ async def manga_arch(message: Message):
       description += "..."
     volumes = data.get("volumes")
     chapters = data.get("chapters")
-    genres = data.get("genres")
-    genre = genres[0]
-    if len(genres) != 1:
-        genre = ", ".join(genres)
     score = data.get("averageScore")
     url = data.get("siteUrl")
     format_ = data.get("format")
@@ -362,7 +350,6 @@ async def manga_arch(message: Message):
     finals_ += f"➤ **VOLUMES:** `{volumes}`\n"
     finals_ += f"➤ **CHAPTERS:** `{chapters}`\n"
     finals_ += f"➤ **SCORE:** `{score}`\n"
-    finals_ += f"➤ **GENRES:** `{genre}`\n"
     finals_ += f"➤ **FORMAT:** `{format_}`\n"
     finals_ += f"➤ **SOURCE:** `{source}`\n\n"
     finals_ += f"Description: `{description}`\n\n"
@@ -410,12 +397,7 @@ async def airing_anim(message: Message):
     country = data.get("countryOfOrigin")
     c_flag = cflag.flag(country)
     source = data.get("source")
-    coverImg = data.get("coverImage")["extraLarge"]
-    genres = data.get("genres")
-    genre = genres[0]
-    if len(genres) != 1:
-        genre = ", ".join(genres)
-    score = data.get("averageScore")
+    coverImg = f"https://img.anili.st/media/{mid}"
     air_on = None
     if data["nextAiringEpisode"]:
         nextAir = data["nextAiringEpisode"]["airingAt"]
@@ -427,8 +409,6 @@ async def airing_anim(message: Message):
     out += f"\n\n**ID:** `{mid}`"
     out += f"\n**Status:** `{status}`\n"
     out += f"**Source:** `{source}`\n"
-    out += f"**Score:** `{score}`\n"
-    out += f"**Genres:** `{genre}`\n"
     if air_on:
         out += f"**Airing Episode:** `[{episode}/{episodes}]`\n"
         out += f"\n`{air_on}`"
@@ -684,8 +664,6 @@ async def get_ani(vars_):
     formats = data.get("format")
     status = data.get("status")
     synopsis = data.get("description")
-    season = data.get("season")
-    episodes = data.get("episodes")
     duration = data.get("duration")
     country = data.get("countryOfOrigin")
     c_flag = cflag.flag(country)
@@ -704,11 +682,11 @@ async def get_ani(vars_):
     sql_id = ""
     for i in prqlsql:
         if i['relationType']=="PREQUEL":
-            prql += f"Prequel: `{i['node']['title']['english' or 'romaji']}`\n"
+            prql += f"**PREQUEL**: `{i['node']['title']['english' or 'romaji']}`\n"
             prql_id += f"{i['node']['id']}"
     for i in prqlsql:
         if i['relationType']=="SEQUEL":
-            sql += f"Sequel: `{i['node']['title']['english' or 'romaji']}`\n"
+            sql += f"**SEQUEL**: `{i['node']['title']['english' or 'romaji']}`\n"
             sql_id += f"{i['node']['id']}"
     if prql_id=="":
         prql_id += "None"
@@ -716,21 +694,13 @@ async def get_ani(vars_):
         sql_id += "None"
     additional = f"{prql}{sql}"
     bannerImg = data.get("bannerImage")
-    genres = data.get("genres")
+    dura = f"➤ **DURATION:** `{duration} min/ep`" if duration!=None else ""
     charlist = []
     for char in data["characters"]["nodes"]:
         charlist.append(f"    •{char['name']['full']}")
     chrctrs = "\n"
     chrctrs += ("\n").join(charlist[:10])
     chrctrsls = f"\n➤ **CHARACTERS:** `{chrctrs}`" if len(charlist)!=0 else ""
-    if genres!=[]:
-        genre = genres[0]
-        if len(genres) != 1:
-            genre = ", ".join(genres)
-        genrels = f"\n➤ **GENRES:** `{genre}`"
-    else:
-        genrels = ""
-    score = data.get("averageScore")
     air_on = None
     if data["nextAiringEpisode"]:
         nextAir = data["nextAiringEpisode"]["airingAt"]
@@ -746,11 +716,10 @@ async def get_ani(vars_):
             th = "th"
         air_on += f" | {ep_}{th} eps"
     if status=="FINISHED":
-        status_air = f"➤ **STATUS:** `{status}`"
+        status_air = f"➤ <b>STATUS:</b> `{status}`"
     else:
-        status_air = f"➤ **STATUS:** `{status}`\n➤ **NEXT AIRING:** `{air_on}`"
+        status_air = f"➤ <b>STATUS:</b> `{status}`\n➤ <b>NEXT AIRING:</b> `{air_on}`"
     s_date = data.get("startDate")
-    yr = s_date["year"]
     adult = data.get("isAdult")
     trailer_link = "N/A"
 
@@ -783,9 +752,8 @@ async def get_ani(vars_):
     html_pc = ""
     html_pc += f"<img src='{title_img}' title={romaji}/>"
     html_pc += f"<h1>[{c_flag}] {native}</h1>"
-    html_pc += f"<br><br><b>No. of Episodes:</b> {episodes}"
     html_pc += f"<br><b>Duration:</b> {duration}"
-    html_pc += f"<br>{status_air}"
+    html_pc += f"<br>{status_air}<br>"
     html_pc += f"<br>{additional}"
     html_pc += "<h3>Synopsis:</h3>"
     html_pc += synopsis
