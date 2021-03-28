@@ -683,10 +683,12 @@ async def get_ani(vars_):
         if i['relationType']=="PREQUEL":
             prql += f"**PREQUEL**: `{i['node']['title']['english' or 'romaji']}`\n"
             prql_id += f"{i['node']['id']}"
+            break
     for i in prqlsql:
         if i['relationType']=="SEQUEL":
             sql += f"**SEQUEL**: `{i['node']['title']['english' or 'romaji']}`\n"
             sql_id += f"{i['node']['id']}"
+            break
     if prql_id=="":
         prql_id += "None"
     if sql_id=="":
@@ -774,7 +776,7 @@ async def get_ani(vars_):
         finals_ = ANIME_TEMPLATE.format(**locals())
     except KeyError as kys:
         return [f"{kys}"]
-    return title_img, finals_, prql_id, sql_id, synopsis_link
+    return title_img, finals_, prql_id, sql_id
 
 
 @userge.bot.on_callback_query(filters.regex(pattern=r"btn_(.*)"))
@@ -798,6 +800,4 @@ async def present_res(cq: CallbackQuery):
             )
         else:
             btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
-    if len(msg) >= 1023:
-        msg = f"[Click Here]({result[4]})"
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
