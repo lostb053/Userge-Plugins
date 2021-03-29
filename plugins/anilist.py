@@ -16,7 +16,7 @@ import tracemoepy
 from aiohttp import ClientSession
 from pyrogram import filters
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
-from userge import Message, get_collection, userge
+from userge import Message, userge
 from userge.utils import media_to_image, check_owner
 from userge.utils import post_to_telegraph as post_to_tp
 
@@ -35,8 +35,6 @@ ANIME_TEMPLATE = """{name}
 📖 [Synopsis & More]({synopsis_link})
 
 {additional}"""
-
-SAVED = get_collection("TEMPLATES")
 
 # GraphQL Queries.
 ANIME_QUERY = """
@@ -201,14 +199,6 @@ query ($search: String, $type: MediaType) {
 }
 """
 
-
-async def _init():
-    global ANIME_TEMPLATE  # pylint: disable=global-statement
-    template = await SAVED.find_one({"_id": "ANIME_TEPLATE"})
-    if template:
-        ANIME_TEMPLATE = template["anime_data"]
-
-
 async def return_json_senpai(query, vars_):
     """ Makes a Post to https://graphql.anilist.co. """
     url_ = "https://graphql.anilist.co"
@@ -264,10 +254,7 @@ async def anim_arch(message: Message):
         if result[3]!="None":
             buttons.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")])
         else:
-            if len(finals_) <= 1023:
-                await message.reply_photo(title_img, caption=finals_)
-            else:
-                await message.reply(finals_)
+            await message.reply_photo(title_img, caption=finals_)
             await message.delete()
             return
     else:
@@ -284,10 +271,7 @@ async def anim_arch(message: Message):
         finals_ = f"[\u200b]({title_img}) {finals_}"
         await message.edit(finals_)
         return
-    if len(finals_) <= 1023:
-        await message.reply_photo(title_img, caption=finals_, reply_markup=InlineKeyboardMarkup(buttons))
-    else:
-        await message.reply(finals_, reply_markup=InlineKeyboardMarkup(buttons))
+    await message.reply_photo(title_img, caption=finals_, reply_markup=InlineKeyboardMarkup(buttons))
     await message.delete()
 
 
@@ -595,54 +579,6 @@ async def trace_bek(message: Message):
         await message.delete()
 
 
-@userge.on_cmd(
-    "setemp",
-    about={
-        "header": "Anime Template",
-        "description": "Set your own Custom Anime Template "
-        "that will be used to format .anime "
-        "searches [<b>NOTE:</b> Requires "
-        "proper key to be entered in curly braces]",
-        "usage": "{tr}setemp [Reply to text Message | Content]",
-    },
-)
-async def ani_save_template(message: Message):
-    """ Set Custom Template for .anime """
-    text = message.input_or_reply_str
-    if not text:
-        await message.err("Invalid Syntax")
-        return
-    await SAVED.update_one(
-        {"_id": "ANIME_TEMPLATE"}, {"$set": {"anime_data": text}}, upsert=True
-    )
-    await message.edit("Custom Anime Template Saved")
-
-
-@userge.on_cmd(
-    "anitemp",
-    about={
-        "header": "Anime Template Settings",
-        "description": "Remove or View current Custom " "that is being used. ",
-        "flags": {"-d": "Delete Saved Template", "-v": "View Saved Template"},
-        "usage": "{tr}anitemp [A valid flag]",
-    },
-)
-async def view_del_ani(message: Message):
-    """ View or Delete .anime Template """
-    if not message.flags:
-        await message.err("Flag Required")
-        return
-    template = await SAVED.find_one({"_id": "ANIME_TEMPLATE"})
-    if not template:
-        await message.err("No Custom Anime Template Saved Peru")
-        return
-    if "-d" in message.flags:
-        await SAVED.delete_one({"_id": "ANIME_TEMPLATE"})
-        await message.edit("Custom Anime Template deleted Successfully")
-    if "-v" in message.flags:
-        await message.edit(template["anime_data"])
-
-
 async def get_ani(vars_):
     result = await return_json_senpai(ANIME_QUERY, vars_)
     error = result.get("errors")
@@ -666,6 +602,12 @@ async def get_ani(vars_):
     duration = data.get("duration")
     country = data.get("countryOfOrigin")
     c_flag = cflag.flag(country)
+    source = data.get("source")
+    prqlsql = data.get("relations").get('edges')
+    bannerImg = data.get("bannerImage")
+    s_date = data.get("startDate")
+    adult = data.get("isAdult")
+    trailer_link = "N/A"
     if data["title"]["english"] is not None:
         name = f'''[{c_flag}]**{romaji}**
         __{english}__
@@ -673,12 +615,7 @@ async def get_ani(vars_):
     else:
         name = f'''[{c_flag}]**{romaji}**
         {native}'''
-    source = data.get("source")
-    prqlsql = data.get("relations").get('edges')
-    prql = ""
-    prql_id = ""
-    sql = ""
-    sql_id = ""
+    prql, prql_id, sql, sql_id = "", "", "", ""
     for i in prqlsql:
         if i['relationType']=="PREQUEL":
             prql += f"**PREQUEL**: `{i['node']['title']['english' or 'romaji']}`\n"
@@ -689,12 +626,9 @@ async def get_ani(vars_):
             sql += f"**SEQUEL**: `{i['node']['title']['english' or 'romaji']}`\n"
             sql_id += f"{i['node']['id']}"
             break
-    if prql_id=="":
-        prql_id += "None"
-    if sql_id=="":
-        sql_id += "None"
+    prql_id += "None" if prql_id=="" else ""
+    sql_id += "None" if sql_id=="" else ""
     additional = f"{prql}{sql}"
-    bannerImg = data.get("bannerImage")
     dura = f"\n➤ **DURATION:** `{duration} min/ep`" if duration!=None else ""
     charlist = []
     for char in data["characters"]["nodes"]:
@@ -706,24 +640,20 @@ async def get_ani(vars_):
     if data["nextAiringEpisode"]:
         nextAir = data["nextAiringEpisode"]["airingAt"]
         air_on = make_it_rw(nextAir)
-        ep_ = data['nextAiringEpisode']['episode']
-        if ep_=="1":
-            th = "st"
-        elif ep_=="2":
-            th = "nd"
-        elif ep_=="3":
-            th = "rd"
+        eps = data['nextAiringEpisode']['episode']
+        ep_ = list(str(data['nextAiringEpisode']['episode']))
+        x = ep_.pop()
+        th = "th"
+        if len(ep_)>=1:
+            if ep_.pop()!="1":
+                th = pos_no(x)
         else:
-            th = "th"
-        air_on += f" | {ep_}{th} eps"
-    if status=="FINISHED":
+            th = pos_no(x)
+        air_on += f" | {eps}{th} eps"
+    if air_on==None:
         status_air = f"➤ <b>STATUS:</b> `{status}`"
     else:
         status_air = f"➤ <b>STATUS:</b> `{status}`\n➤ <b>NEXT AIRING:</b> `{air_on}`"
-    s_date = data.get("startDate")
-    adult = data.get("isAdult")
-    trailer_link = "N/A"
-
     if data["trailer"] and data["trailer"]["site"] == "youtube":
         trailer_link = f"[Trailer](https://youtu.be/{data['trailer']['id']})"
     html_char = ""
@@ -740,22 +670,13 @@ async def get_ani(vars_):
             f"<h4>About Character and Role:</h4>{character.get('description', 'N/A')}"
         )
         html_char += f"{html_}<br><br>"
-
-    studios = "".join(
-        "<a href='{}'>• {}</a> ".format(studio["siteUrl"], studio["name"])
-        for studio in data["studios"]["nodes"]
-    )
-
+    studios = "".join("<a href='{}'>• {}</a> ".format(studio["siteUrl"], studio["name"]) for studio in data["studios"]["nodes"])
     url = data.get("siteUrl")
-
     title_img = f"https://img.anili.st/media/{idm}"
     # Telegraph Post mejik
     html_pc = ""
     html_pc += f"<img src='{title_img}' title={romaji}/>"
     html_pc += f"<h1>[{c_flag}] {native}</h1>"
-    html_pc += f"<br><b>Duration:</b> {duration}"
-    html_pc += f"<br>{status_air}<br>"
-    html_pc += f"<br>{additional}"
     html_pc += "<h3>Synopsis:</h3>"
     html_pc += synopsis
     html_pc += "<br>"
@@ -769,7 +690,6 @@ async def get_ani(vars_):
     html_pc += f"<a href='https://myanimelist.net/anime/{idmal}'>View on MAL</a>"
     html_pc += f"<a href='{url}'> View on anilist.co</a>"
     html_pc += f"<img src='{bannerImg}'/>"
-
     title_h = english or romaji
     synopsis_link = post_to_tp(title_h, html_pc)
     try:
@@ -777,6 +697,11 @@ async def get_ani(vars_):
     except KeyError as kys:
         return [f"{kys}"]
     return title_img, finals_, prql_id, sql_id
+
+
+def pos_no(x):
+    th = "st" if x=="1" else "nd" if x=="2" else "rd" if x=="3" else "th"
+    return th
 
 
 @userge.bot.on_callback_query(filters.regex(pattern=r"btn_(.*)"))
