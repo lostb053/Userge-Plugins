@@ -249,14 +249,28 @@ async def anim_arch(message: Message):
         title_img, finals_ = result[0], result[1]
     else:
         return await message.err(result[0])
+    buttons = []
+    if result[2]=="None":
+        if result[3]!="None":
+            buttons.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")])
+        else:
+            await message.reply_photo(title_img, caption=finals_)
+            await message.delete()
+            return
+    else:
+        if result[3]!="None":
+            buttons.append(
+                [
+                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}"),
+                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")
+                ]
+            )
+        else:
+            buttons.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
     if "-wp" in message.flags:
         finals_ = f"[\u200b]({title_img}) {finals_}"
         await message.edit(finals_)
         return
-    buttons = btn_man(result[2], result[3])
-    if "None" in buttons:
-        await message.reply_photo(title_img, caption=finals_)
-        return await message.delete()
     await message.reply_photo(title_img, caption=finals_, reply_markup=InlineKeyboardMarkup(buttons))
     await message.delete()
 
@@ -685,6 +699,11 @@ async def get_ani(vars_):
     return title_img, finals_, prql_id, sql_id
 
 
+def pos_no(x):
+    th = "st" if x=="1" else "nd" if x=="2" else "rd" if x=="3" else "th"
+    return th
+
+
 @userge.bot.on_callback_query(filters.regex(pattern=r"btn_(.*)"))
 @check_owner
 async def present_res(cq: CallbackQuery):
@@ -692,30 +711,18 @@ async def present_res(cq: CallbackQuery):
     vars_ = {"id": int(idm), "asHtml": True, "type": "ANIME"}
     result = await get_ani(vars_)
     pic, msg = result[0], result[1]
-    btns = btn_man(result[2], result[3])
-    await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
-
-
-def btn_man(prql, sql):
-    buttons = []
-    if prql=="None":
-        if sql!="None":
-            buttons.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{sql}")])
-        else:
-            buttons.append("None")
+    btns = []
+    if result[2]=="None":
+        if result[3]!="None":
+            btns.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")])
     else:
-        if sql!="None":
-            buttons.append(
+        if result[3]!="None":
+            btns.append(
                 [
-                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{prql}"),
-                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{sql}")
+                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}"),
+                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")
                 ]
             )
         else:
-            buttons.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{prql}")])
-    return buttons
-
-
-def pos_no(x):
-    th = "st" if x=="1" else "nd" if x=="2" else "rd" if x=="3" else "th"
-    return th
+            btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
+    await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
