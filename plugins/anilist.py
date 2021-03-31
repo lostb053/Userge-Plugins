@@ -618,12 +618,12 @@ async def get_ani(vars_):
     prql, prql_id, sql, sql_id = "", "", "", ""
     for i in prqlsql:
         if i['relationType']=="PREQUEL":
-            prql += f"**PREQUEL:** `{i['node']['title']['english' if i['node']['title']!=None else 'romaji']}`\n"
+            prql += f"**PREQUEL:** `{i['node']['title']['romaji']}`\n"
             prql_id += f"{i['node']['id']}"
             break
     for i in prqlsql:
         if i['relationType']=="SEQUEL":
-            sql += f"**SEQUEL:** `{i['node']['title']['english' if i['node']['title']!=None else 'romaji']}`\n"
+            sql += f"**SEQUEL:** `{i['node']['title']['romaji']}`\n"
             sql_id += f"{i['node']['id']}"
             break
     prql_id += "None" if prql_id=="" else ""
