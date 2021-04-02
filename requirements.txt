@@ -16,6 +16,8 @@ tracemoepy==3.8
 validators
 geopy
 prettytable
+pytgcalls
 newspaper3k
 pydub
 pyfiglet
+ffmpeg-python
