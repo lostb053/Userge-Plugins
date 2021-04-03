@@ -68,6 +68,7 @@ async def leave_chat(message: Message):
     """ Leave chat """
     input_str = message.input_str
     text = input_str or message.chat.id
+    await message.delete()
     try:
         await userge.leave_chat(text)
     except UsernameNotOccupied:
@@ -81,7 +82,6 @@ async def leave_chat(message: Message):
         )
         return
     else:
-        await message.delete()
         await asyncio.sleep(2)
 
 
