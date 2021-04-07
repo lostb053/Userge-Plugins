@@ -254,9 +254,10 @@ async def anim_arch(message: Message):
         if result[3]!="None":
             buttons.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")])
         else:
-            await message.reply_photo(title_img, caption=finals_)
-            await message.delete()
-            return
+            if result[4]!=False:
+                await message.reply_photo(title_img, caption=finals_)
+                await message.delete()
+                return
     else:
         if result[3]!="None":
             buttons.append(
@@ -267,8 +268,8 @@ async def anim_arch(message: Message):
             )
         else:
             buttons.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
-        if result[4]==False:
-            buttons.append([InlineKeyboardButton(text="Download", switch_inline_query=f"anime {result[5]}")])
+    if result[4]==False:
+        buttons.append([InlineKeyboardButton(text="Download", switch_inline_query=f"anime {result[5]}")])
     if "-wp" in message.flags:
         finals_ = f"[\u200b]({title_img}) {finals_}"
         await message.edit(finals_)
@@ -729,6 +730,6 @@ async def present_res(cq: CallbackQuery):
             )
         else:
             btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
-        if result[4]==False:
-            btns.append([InlineKeyboardButton(text="Download", switch_inline_query=f"anime {result[5]}")])
+    if result[4]==False:
+        btns.append([InlineKeyboardButton(text="Download", switch_inline_query=f"anime {result[5]}")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
