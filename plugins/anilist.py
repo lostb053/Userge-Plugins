@@ -267,6 +267,8 @@ async def anim_arch(message: Message):
             )
         else:
             buttons.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
+        if result[4]==False:
+            buttons.append([InlineKeyboardButton(text="Download", switch_inline_query=f"anime {result[5]}")])
     if "-wp" in message.flags:
         finals_ = f"[\u200b]({title_img}) {finals_}"
         await message.edit(finals_)
@@ -698,7 +700,7 @@ async def get_ani(vars_):
         finals_ = ANIME_TEMPLATE.format(**locals())
     except KeyError as kys:
         return [f"{kys}"]
-    return title_img, finals_, prql_id, sql_id
+    return title_img, finals_, prql_id, sql_id, adult, romaji
 
 
 def pos_no(x):
@@ -727,4 +729,6 @@ async def present_res(cq: CallbackQuery):
             )
         else:
             btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
+        if result[4]==False:
+            btns.append([InlineKeyboardButton(text="Download", switch_inline_query=f"anime {result[5]}")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
