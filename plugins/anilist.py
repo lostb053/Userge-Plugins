@@ -269,7 +269,7 @@ async def anim_arch(message: Message):
         else:
             buttons.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
     if result[4]==False:
-        buttons.append([InlineKeyboardButton(text="Download", switch_inline_query=f"anime {result[5]}")])
+        buttons.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
     if "-wp" in message.flags:
         finals_ = f"[\u200b]({title_img}) {finals_}"
         await message.edit(finals_)
@@ -731,5 +731,5 @@ async def present_res(cq: CallbackQuery):
         else:
             btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
     if result[4]==False:
-        btns.append([InlineKeyboardButton(text="Download", switch_inline_query=f"anime {result[5]}")])
+        btns.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
