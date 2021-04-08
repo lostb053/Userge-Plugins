@@ -312,8 +312,8 @@ async def manga_arch(message: Message):
     native = data["title"]["native"]
     status = data.get("status")
     synopsis = data.get("description")
-    description = synopsis[:720]
-    if len(synopsis) > 720:
+    description = synopsis[:500]
+    if len(synopsis) > 500:
       description += "..."
     volumes = data.get("volumes")
     chapters = data.get("chapters")
