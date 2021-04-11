@@ -618,21 +618,19 @@ async def get_ani(vars_):
     else:
         name = f'''[{c_flag}]**{romaji}**
         {native}'''
-    prql, prql_id, sql, sql_id = "", "", "", ""
+    prql, prql_id, sql, sql_id = "", "None", "", "None"
     for i in prqlsql:
         if i['relationType']=="PREQUEL":
             pname = i["node"]["title"]["english"] if i["node"]["title"]["english"] is not None else i["node"]["title"]["romaji"]
             prql += f"**PREQUEL:** `{pname}`\n"
-            prql_id += f"{i['node']['id']}"
+            prql_id = f"{i['node']['id']}"
             break
     for i in prqlsql:
         if i['relationType']=="SEQUEL":
             sname = i["node"]["title"]["english"] if i["node"]["title"]["english"] is not None else i["node"]["title"]["romaji"]
             sql += f"**SEQUEL:** `{sname}`\n"
-            sql_id += f"{i['node']['id']}"
+            sql_id = f"{i['node']['id']}"
             break
-    prql_id += "None" if prql_id=="" else ""
-    sql_id += "None" if sql_id=="" else ""
     additional = f"{prql}{sql}"
     dura = f"\n➤ **DURATION:** `{duration} min/ep`" if duration!=None else ""
     charlist = []
