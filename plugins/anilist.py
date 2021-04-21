@@ -6,6 +6,7 @@
 # Anime Reverse Search Powered by tracemoepy.
 # TraceMoePy (GitHub: https://github.com/DragSama/tracemoepy)
 # (C) Author: Phyco-Ninja (https://github.com/Phyco-Ninja) (@PhycoNinja13b)
+# Tweaked by @LostB053 (on telegram)
 
 import os
 from datetime import datetime
@@ -104,6 +105,32 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
             }
         }
         siteUrl
+    }
+}
+"""
+
+PAGE_QUERY = """
+query ($search: String, $pp: Int, $type: MediaType) {
+    Page (perPage: $pp) {
+        media (search: $search, type: $type) {
+            id
+            title {
+                romaji
+            }
+        }
+    }
+}
+"""
+
+PAGE_QUERYC = """
+query ($search: String, $pp: Int) {
+    Page (perPage: $pp) {
+        character (search: $search) {
+            id
+            title {
+                romaji
+            }
+        }
     }
 }
 """
@@ -469,79 +496,11 @@ async def character_search(message: Message):
         await message.err("NameError: 'query' not defined")
         return
     var = {"search": query, "asHtml": True}
-    result = await return_json_senpai(CHARACTER_QUERY, var)
-    error = result.get("errors")
-    if error:
-        await CLOG.log(f"**ANILIST RETURNED FOLLOWING ERROR:**\n\n`{error}`")
-        error_sts = error[0].get("message")
-        await message.err(f"[{error_sts}]")
-        return
-
-    data = result["data"]["Character"]
-
-    # Character Data
-    id_ = data["id"]
-    name = data["name"]["full"]
-    native = data["name"]["native"]
-    img = data["image"]["large"]
-    site_url = data["siteUrl"]
-    description = data["description"]
-    featured = data["media"]["nodes"]
-    snin = "\n"
-    sninal = ""
-    sninml = ""
-    for ani in featured:
-        k = ani["title"]["english"] or ani["title"]["romaji"]
-        kk = ani["type"]
-        if kk=="MANGA":
-            sninml += f"    • {k}\n"
-    for ani in featured:
-        kkk = ani["title"]["english"] or ani["title"]["romaji"]
-        kkkk = ani["type"]
-        if kkkk=="ANIME":
-            sninal += f"    • {kkk}\n"
-    sninal += "\n"
-    sninm = "  `MANGAS`\n" if len(sninml)!=0 else ""
-    snina = "  `ANIMES`\n" if len(sninal)!=0 else ""
-    snin = f"\n{snina}{sninal}{sninm}{sninml}"
-    sp = 0
-    cntnt = ""
-    for cf in featured:
-        out = "<br>"
-        out += f"""<img src="{cf['coverImage']['extraLarge']}"/>"""
-        out += "<br>"
-        title = cf["title"]["english"] or cf["title"]["romaji"]
-        out += f"<h3>{title}</h3>"
-        out += f"<em>[🇯🇵] {cf['title']['native']}</em><br>"
-        out += f"""<a href="{cf['siteUrl']}>{cf['type']}</a><br>"""
-        out += f"<b>Media ID:</b> {cf['id']}<br>"
-        out += f"<b>SCORE:</b> {cf['averageScore']}/100<br>"
-        out += cf.get("description", "N/A") + "<br>"
-        cntnt += out
-        sp += 1
-        out = ""
-        if sp > 5:
-            break
-
-    html_cntnt = f"<img src='{img}' title={name}/>"
-    html_cntnt += f"<h1>[🇯🇵] {native}</h1>"
-    html_cntnt += "<h3>About Character:</h3>"
-    html_cntnt += description
-    html_cntnt += "<br>"
-    if cntnt:
-        html_cntnt += "<h2>Top Featured Anime</h2>"
-        html_cntnt += cntnt
-        html_cntnt += "<br><br>"
-    url_ = post_to_tp(name, html_cntnt)
-    cap_text = f"""[🇯🇵] __{native}__
-    (`{name}`)
-**ID:** {id_}
-
-**Featured in:** __{snin}__
-
-[About Character]({url_})
-[Visit Website]({site_url})"""
-
+    result = await get_ani(var)
+    if len(result)==1:
+        return await message.err(result)
+    img = result[0]
+    cap_text = result[1]
     if len(cap_text) <= 1023:
         await message.reply_photo(img, caption=cap_text)
     else:
@@ -582,6 +541,34 @@ async def trace_bek(message: Message):
         await message.delete()
 
 
+@userge.on_cmd(
+    "ani",
+    about={
+        "header": "Advanced Anime Search",
+        "description": "Search for Anime using AniList API",
+        "usage": "{tr}ani [anime name] or {tr}ani -c [character name]",
+        "examples": ["{tr}ianime Asterisk war", "{tr}ani -c Hanabi"]
+    },
+    allow_private=False
+)
+async def ianime(message: Message):
+    k = await userge.get_me()
+    x = await message.reply("`Getting Anime Info`")
+    if x.from_user.id==k.id:
+        await x.err("Please verify if bot is present in group, supported via bot only")
+    query = message.input_str
+    get_list = {"search": query, "pp": 10}
+    result = await return_json_senpai(PAGE_QUERYC if "-c" in message.flags else PAGE_QUERY, get_list)
+    data = result["data"]["Page"]["media" if "-c" not in message.flags else "character"]
+    button = []
+    for i in data:
+        rom = i['title']['romaji'] if "-c" not in message.flags else i['name']['full']
+        cbd = f"btn_{i['id']}_{query}" if "-c" not in message.flags else f"btc_{rom}_{query}"
+        button.append([InlineKeyboardButton(text=f"{rom}", callback_data=cbd)])
+    await message.reply(f'Showing top results for `{query}`:', reply_markup=InlineKeyboardMarkup(button))
+    await x.delete()
+
+
 async def get_ani(vars_):
     result = await return_json_senpai(ANIME_QUERY, vars_)
     error = result.get("errors")
@@ -601,6 +588,7 @@ async def get_ani(vars_):
     native = data["title"]["native"]
     formats = data.get("format")
     status = data.get("status")
+    episodes = data.get("episodes")
     synopsis = data.get("description")
     duration = data.get("duration")
     country = data.get("countryOfOrigin")
@@ -644,7 +632,7 @@ async def get_ani(vars_):
         nextAir = data["nextAiringEpisode"]["airingAt"]
         air_on = make_it_rw(nextAir)
         eps = data['nextAiringEpisode']['episode']
-        ep_ = list(str(data['nextAiringEpisode']['episode']))
+        ep_ = list(str(eps))
         x = ep_.pop()
         th = "th"
         if len(ep_)>=1:
@@ -654,7 +642,8 @@ async def get_ani(vars_):
             th = pos_no(x)
         air_on += f" | {eps}{th} eps"
     if air_on==None:
-        status_air = f"➤ <b>STATUS:</b> `{status}`"
+        eps_ =  f" | {episodes} eps" if episodes!=None else ""
+        status_air = f"➤ <b>STATUS:</b> `{status}{eps_}`"
     else:
         status_air = f"➤ <b>STATUS:</b> `{status}`\n➤ <b>NEXT AIRING:</b> `{air_on}`"
     if data["trailer"] and data["trailer"]["site"] == "youtube":
@@ -702,6 +691,78 @@ async def get_ani(vars_):
     return title_img, finals_, prql_id, sql_id, adult, romaji
 
 
+async def get_char(var):
+    result = await return_json_senpai(CHARACTER_QUERY, var)
+    error = result.get("errors")
+    if error:
+        await CLOG.log(f"**ANILIST RETURNED FOLLOWING ERROR:**\n\n`{error}`")
+        error_sts = error[0].get("message")
+        return [f"[{error_sts}]"]
+    data = result["data"]["Character"]
+    # Character Data
+    id_ = data["id"]
+    name = data["name"]["full"]
+    native = data["name"]["native"]
+    img = data["image"]["large"]
+    site_url = data["siteUrl"]
+    description = data["description"]
+    featured = data["media"]["nodes"]
+    snin = "\n"
+    sninal = ""
+    sninml = ""
+    for ani in featured:
+        k = ani["title"]["english"] or ani["title"]["romaji"]
+        kk = ani["type"]
+        if kk=="MANGA":
+            sninml += f"    • {k}\n"
+    for ani in featured:
+        kkk = ani["title"]["english"] or ani["title"]["romaji"]
+        kkkk = ani["type"]
+        if kkkk=="ANIME":
+            sninal += f"    • {kkk}\n"
+    sninal += "\n"
+    sninm = "  `MANGAS`\n" if len(sninml)!=0 else ""
+    snina = "  `ANIMES`\n" if len(sninal)!=0 else ""
+    snin = f"\n{snina}{sninal}{sninm}{sninml}"
+    sp = 0
+    cntnt = ""
+    for cf in featured:
+        out = "<br>"
+        out += f"""<img src="{cf['coverImage']['extraLarge']}"/>"""
+        out += "<br>"
+        title = cf["title"]["english"] or cf["title"]["romaji"]
+        out += f"<h3>{title}</h3>"
+        out += f"<em>[🇯🇵] {cf['title']['native']}</em><br>"
+        out += f"""<a href="{cf['siteUrl']}>{cf['type']}</a><br>"""
+        out += f"<b>Media ID:</b> {cf['id']}<br>"
+        out += f"<b>SCORE:</b> {cf['averageScore']}/100<br>"
+        out += cf.get("description", "N/A") + "<br>"
+        cntnt += out
+        sp += 1
+        out = ""
+        if sp > 5:
+            break
+    html_cntnt = f"<img src='{img}' title={name}/>"
+    html_cntnt += f"<h1>[🇯🇵] {native}</h1>"
+    html_cntnt += "<h3>About Character:</h3>"
+    html_cntnt += description
+    html_cntnt += "<br>"
+    if cntnt:
+        html_cntnt += "<h2>Top Featured Anime</h2>"
+        html_cntnt += cntnt
+        html_cntnt += "<br><br>"
+    url_ = post_to_tp(name, html_cntnt)
+    cap_text = f"""[🇯🇵] __{native}__
+    (`{name}`)
+**ID:** {id_}
+
+**Featured in:** __{snin}__
+
+[About Character]({url_})
+[Visit Website]({site_url})"""
+    return img, cap_text, name, f"**Featured in:** __{snin}__", description
+
+
 def pos_no(x):
     th = "st" if x=="1" else "nd" if x=="2" else "rd" if x=="3" else "th"
     return th
@@ -710,24 +771,77 @@ def pos_no(x):
 @userge.bot.on_callback_query(filters.regex(pattern=r"btn_(.*)"))
 @check_owner
 async def present_res(cq: CallbackQuery):
-    idm = cq.data.split("_")[1]
+    qry = cq.data.split("_")
+    idm = qry[1]
     vars_ = {"id": int(idm), "asHtml": True, "type": "ANIME"}
     result = await get_ani(vars_)
     pic, msg = result[0], result[1]
     btns = []
+    query = f"_{qry[2]}" if len(qry)==3 else ""
     if result[2]=="None":
         if result[3]!="None":
-            btns.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")])
+            btns.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{query}")])
     else:
         if result[3]!="None":
             btns.append(
                 [
-                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}"),
-                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")
+                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{query}"),
+                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{query}")
                 ]
             )
         else:
-            btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
+            btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{query}")])
     if result[4]==False:
         btns.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
+    if query=="":
+        btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{query}_ani")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
+
+
+@userge.bot.on_callback_query(filters.regex(pattern=r"btc_(.*)"))
+@check_owner
+async def present_resc(cq: CallbackQuery):
+    qry = cq.data.split("_")
+    charq = qry[1]
+    query = qry[2]
+    vars_ = {"search": charq, "asHtml": True}
+    result = await get_char(vars_)
+    pic, msg, name = result[0], result[1], result[2]
+    btns = [
+        [
+            InlineKeyboardButton(text="Description", callback_data=f"info_{name}_d_{query}"),
+            InlineKeyboardButton(text="List Series", callback_data=f"info_{name}_s_{query}")
+        ],
+        [InlineKeyboardButton(text="Back", callback_data=f"back_{query}_char")]
+    ]
+    await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
+
+
+@userge.bot.on_callback_query(filters.regex(pattern=r"back_(.*)"))
+@check_owner
+async def list_res(cq: CallbackQuery):
+    qry = cq.data.split("_")
+    query = qry[1]
+    typ = qry[2]
+    get_list = {"search": query, "pp": 10}
+    result = await return_json_senpai(PAGE_QUERYC if typ=="char" else PAGE_QUERY, get_list)
+    data = result["data"]["Page"]["media" if typ=="ani" else "character"]
+    button = []
+    for i in data:
+        rom = i['title']['romaji'] if typ=="ani" else i['name']['full']
+        cbd = f"btn_{i['id']}_{query}" if typ=="ani" else f"btc_{rom}_{query}"
+        button.append([InlineKeyboardButton(text=f"{rom}", callback_data=cbd)])
+    await cq.edit_message_text(f'Showing top results for `{query}`:', reply_markup=InlineKeyboardMarkup(button))
+
+
+@userge.bot.on_callback_query(filters.regex(pattern=r"info_(.*)"))
+@check_owner
+async def list_res(cq: CallbackQuery):
+    qry = cq.data.split("_")[1]
+    info = cq.data.split("_")[2]
+    query = cq.data.split("_")[3]
+    vars_ = {"search": qry, "asHtml": True}
+    result = await get_char(vars_)
+    desc, series = result[4], result[3]
+    button = [[InlineKeyboardButton(text=f"{qry}", callback_data=f"btc_{qry}_{query}")]]
+    await cq.edit_message_text(f'{qry}\n\n{desc if info=="d" else series}', reply_markup=InlineKeyboardMarkup(button))
