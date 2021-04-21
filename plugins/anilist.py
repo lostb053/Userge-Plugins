@@ -496,7 +496,7 @@ async def character_search(message: Message):
         await message.err("NameError: 'query' not defined")
         return
     var = {"search": query, "asHtml": True}
-    result = await get_ani(var)
+    result = await get_char(var)
     if len(result)==1:
         return await message.err(result)
     img = result[0]
@@ -793,7 +793,7 @@ async def present_res(cq: CallbackQuery):
             btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{query}")])
     if result[4]==False:
         btns.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
-    if query=="":
+    if query!="":
         btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{query}_ani")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
 
