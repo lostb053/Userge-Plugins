@@ -541,34 +541,6 @@ async def trace_bek(message: Message):
         await message.delete()
 
 
-@userge.on_cmd(
-    "ani",
-    about={
-        "header": "Advanced Anime Search",
-        "description": "Search for Anime using AniList API",
-        "usage": "{tr}ani [anime name] or {tr}ani -c [character name]",
-        "examples": ["{tr}ianime Asterisk war", "{tr}ani -c Hanabi"]
-    },
-    allow_private=False
-)
-async def ianime(message: Message):
-    k = await userge.get_me()
-    x = await message.reply("`Getting Anime Info`")
-    if x.from_user.id==k.id:
-        await x.err("Please verify if bot is present in group, supported via bot only")
-    query = message.input_str
-    get_list = {"search": query, "pp": 10}
-    result = await return_json_senpai(PAGE_QUERYC if "-c" in message.flags else PAGE_QUERY, get_list)
-    data = result["data"]["Page"]["media" if "-c" not in message.flags else "characters"]
-    button = []
-    for i in data:
-        rom = i['title']['romaji'] if "-c" not in message.flags else i['name']['full']
-        cbd = f"btn_{i['id']}_{query}" if "-c" not in message.flags else f"btc_{rom}_{query}"
-        button.append([InlineKeyboardButton(text=f"{rom}", callback_data=cbd)])
-    await message.reply(f'Showing top results for `{query}`:', reply_markup=InlineKeyboardMarkup(button))
-    await x.delete()
-
-
 async def get_ani(vars_):
     result = await return_json_senpai(ANIME_QUERY, vars_)
     error = result.get("errors")
@@ -760,7 +732,7 @@ async def get_char(var):
 
 [About Character]({url_})
 [Visit Website]({site_url})"""
-    return img, cap_text, name, f"**Featured in:** __{snin}__", description
+    return img, cap_text
 
 
 def pos_no(x):
@@ -771,77 +743,24 @@ def pos_no(x):
 @userge.bot.on_callback_query(filters.regex(pattern=r"btn_(.*)"))
 @check_owner
 async def present_res(cq: CallbackQuery):
-    qry = cq.data.split("_")
-    idm = qry[1]
+    idm = cq.data.split("_")[1]
     vars_ = {"id": int(idm), "asHtml": True, "type": "ANIME"}
     result = await get_ani(vars_)
     pic, msg = result[0], result[1]
     btns = []
-    query = f"_{qry[2]}" if len(qry)==3 else ""
     if result[2]=="None":
         if result[3]!="None":
-            btns.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{query}")])
+            btns.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")])
     else:
         if result[3]!="None":
             btns.append(
                 [
-                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{query}"),
-                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{query}")
+                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}"),
+                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")
                 ]
             )
         else:
-            btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{query}")])
+            btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
     if result[4]==False:
         btns.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
-    if query!="":
-        btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{query}_ani")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
-
-
-@userge.bot.on_callback_query(filters.regex(pattern=r"btc_(.*)"))
-@check_owner
-async def present_resc(cq: CallbackQuery):
-    qry = cq.data.split("_")
-    charq = qry[1]
-    query = qry[2]
-    vars_ = {"search": charq, "asHtml": True}
-    result = await get_char(vars_)
-    pic, msg, name = result[0], result[1], result[2]
-    btns = [
-        [
-            InlineKeyboardButton(text="Description", callback_data=f"info_{name}_d_{query}"),
-            InlineKeyboardButton(text="List Series", callback_data=f"info_{name}_s_{query}")
-        ],
-        [InlineKeyboardButton(text="Back", callback_data=f"back_{query}_char")]
-    ]
-    await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
-
-
-@userge.bot.on_callback_query(filters.regex(pattern=r"back_(.*)"))
-@check_owner
-async def info_(cq: CallbackQuery):
-    qry = cq.data.split("_")
-    query = qry[1]
-    typ = qry[2]
-    get_list = {"search": query, "pp": 10}
-    result = await return_json_senpai(PAGE_QUERYC if typ=="char" else PAGE_QUERY, get_list)
-    data = result["data"]["Page"]["media" if typ=="ani" else "characters"]
-    button = []
-    for i in data:
-        rom = i['title']['romaji'] if typ=="ani" else i['name']['full']
-        cbd = f"btn_{i['id']}_{typ}" if typ=="ani" else f"btc_{rom}_{typ}"
-        button.append([InlineKeyboardButton(text=f"{rom}", callback_data=cbd)])
-    await cq.edit_message_text(f'Showing top results for `{query}`:', reply_markup=InlineKeyboardMarkup(button))
-
-
-@userge.bot.on_callback_query(filters.regex(pattern=r"info_(.*)"))
-@check_owner
-async def list_srs(cq: CallbackQuery):
-    qry = cq.data.split("_")[1]
-    info = cq.data.split("_")[2]
-    query = cq.data.split("_")[3]
-    vars_ = {"search": qry, "asHtml": True}
-    result = await get_char(vars_)
-    desc, series = result[4], result[3]
-    button = [[InlineKeyboardButton(text=f"{qry}", callback_data=f"btc_{qry}_{query}")]]
-    await cq.edit_message_text(f'{qry}\n\n{desc if info=="d" else series}', reply_markup=InlineKeyboardMarkup(button))
