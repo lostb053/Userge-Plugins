@@ -559,7 +559,7 @@ async def ianime(message: Message):
     query = message.input_str
     get_list = {"search": query, "pp": 10}
     result = await return_json_senpai(PAGE_QUERYC if "-c" in message.flags else PAGE_QUERY, get_list)
-    data = result["data"]["Page"]["media" if "-c" not in message.flags else "character"]
+    data = result["data"]["Page"]["media" if "-c" not in message.flags else "characters"]
     button = []
     for i in data:
         rom = i['title']['romaji'] if "-c" not in message.flags else i['name']['full']
@@ -819,24 +819,24 @@ async def present_resc(cq: CallbackQuery):
 
 @userge.bot.on_callback_query(filters.regex(pattern=r"back_(.*)"))
 @check_owner
-async def list_res(cq: CallbackQuery):
+async def info_(cq: CallbackQuery):
     qry = cq.data.split("_")
     query = qry[1]
     typ = qry[2]
     get_list = {"search": query, "pp": 10}
     result = await return_json_senpai(PAGE_QUERYC if typ=="char" else PAGE_QUERY, get_list)
-    data = result["data"]["Page"]["media" if typ=="ani" else "character"]
+    data = result["data"]["Page"]["media" if typ=="ani" else "characters"]
     button = []
     for i in data:
         rom = i['title']['romaji'] if typ=="ani" else i['name']['full']
-        cbd = f"btn_{i['id']}_{query}" if typ=="ani" else f"btc_{rom}_{query}"
+        cbd = f"btn_{i['id']}_{typ}" if typ=="ani" else f"btc_{rom}_{typ}"
         button.append([InlineKeyboardButton(text=f"{rom}", callback_data=cbd)])
     await cq.edit_message_text(f'Showing top results for `{query}`:', reply_markup=InlineKeyboardMarkup(button))
 
 
 @userge.bot.on_callback_query(filters.regex(pattern=r"info_(.*)"))
 @check_owner
-async def list_res(cq: CallbackQuery):
+async def list_srs(cq: CallbackQuery):
     qry = cq.data.split("_")[1]
     info = cq.data.split("_")[2]
     query = cq.data.split("_")[3]
