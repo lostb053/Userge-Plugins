@@ -125,10 +125,10 @@ query ($search: String, $pp: Int, $type: MediaType) {
 PAGE_QUERYC = """
 query ($search: String, $pp: Int) {
     Page (perPage: $pp) {
-        character (search: $search) {
+        characters (search: $search) {
             id
-            title {
-                romaji
+            name {
+                full
             }
         }
     }
