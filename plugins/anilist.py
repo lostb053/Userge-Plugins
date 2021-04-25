@@ -109,32 +109,6 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
 }
 """
 
-PAGE_QUERY = """
-query ($search: String, $pp: Int, $type: MediaType) {
-    Page (perPage: $pp) {
-        media (search: $search, type: $type) {
-            id
-            title {
-                romaji
-            }
-        }
-    }
-}
-"""
-
-PAGE_QUERYC = """
-query ($search: String, $pp: Int) {
-    Page (perPage: $pp) {
-        characters (search: $search) {
-            id
-            name {
-                full
-            }
-        }
-    }
-}
-"""
-
 AIRING_QUERY = """
 query ($id: Int, $mediaId: Int, $notYetAired: Boolean) {
   Page(page: 1, perPage: 50) {
