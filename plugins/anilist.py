@@ -39,8 +39,8 @@ ANIME_TEMPLATE = """{name}
 
 # GraphQL Queries.
 ANIME_QUERY = """
-query ($id: Int, $idMal:Int, $search: String) {
-    Media (id: $id, idMal: $idMal, search: $search, type: ANIME) {
+query ($id: Int, $idMal:Int, $search: String, $asHtml: Boolean) {
+    Media (id: $id, idMal: $idMal, search: $search, asHtml: $asHtml,type: ANIME) {
         id
         idMal
         title {
@@ -50,7 +50,7 @@ query ($id: Int, $idMal:Int, $search: String) {
         }
         format
         status
-        description (asHtml: True)
+        description (asHtml: $asHtml)
         startDate {
             year
             month
@@ -94,7 +94,7 @@ query ($id: Int, $idMal:Int, $search: String) {
                 image {
                     large
                 }
-                description (asHtml: True)
+                description (asHtml: $asHtml)
                 siteUrl
             }
         }
@@ -179,8 +179,8 @@ query ($search: String, $asHtml: Boolean) {
 """
 
 MANGA_QUERY = """
-query ($search: String, $type: MediaType) {
-    Media (search: $search, type: $type) {
+query ($search: String) {
+    Media (search: $search, type: MANGA) {
         id
         title {
             romaji
@@ -240,11 +240,11 @@ async def anim_arch(message: Message):
     if not query:
         await message.err("NameError: 'query' not defined")
         return
-    vars_ = {"search": query}
+    vars_ = {"search": query, "asHtml": True}
     if query.isdigit():
-        vars_ = {"id": int(query)}
+        vars_ = {"id": int(query), "asHtml": True}
         if "-mid" in message.flags:
-            vars_ = {"idMal": int(query)}
+            vars_ = {"idMal": int(query), "asHtml": True}
     result = await get_ani(vars_)
     if len(result)!=1:
         title_img, finals_ = result[0], result[1]
@@ -294,7 +294,7 @@ async def manga_arch(message: Message):
     if not query:
         await message.err("NameError: 'query' not defined")
         return
-    vars_ = {"search": query, "asHtml": True, "type": "MANGA"}
+    vars_ = {"search": query, "asHtml": True}
     result = await return_json_senpai(MANGA_QUERY, vars_)
     error = result.get("errors")
     if error:
@@ -361,9 +361,9 @@ async def airing_anim(message: Message):
     if not query:
         await message.err("NameError: 'query' not defined")
         return
-    vars_ = {"search": query, "asHtml": True, "type": "ANIME"}
+    vars_ = {"search": query}
     if query.isdigit():
-        vars_ = {"id": int(query), "asHtml": True, "type": "ANIME"}
+        vars_ = {"id": int(query), "asHtml": True}
     result = await return_json_senpai(ANIME_QUERY, vars_)
     error = result.get("errors")
     if error:
@@ -718,7 +718,7 @@ def pos_no(x):
 @check_owner
 async def present_res(cq: CallbackQuery):
     idm = cq.data.split("_")[1]
-    vars_ = {"id": int(idm), "asHtml": True, "type": "ANIME"}
+    vars_ = {"id": int(idm), "asHtml": True}
     result = await get_ani(vars_)
     pic, msg = result[0], result[1]
     btns = []
