@@ -40,7 +40,7 @@ ANIME_TEMPLATE = """{name}
 # GraphQL Queries.
 ANIME_QUERY = """
 query ($id: Int, $idMal:Int, $search: String, $asHtml: Boolean) {
-    Media (id: $id, idMal: $idMal, search: $search, asHtml: $asHtml,type: ANIME) {
+    Media (id: $id, idMal: $idMal, search: $search, type: ANIME) {
         id
         idMal
         title {
