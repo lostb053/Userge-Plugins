@@ -39,8 +39,8 @@ ANIME_TEMPLATE = """{name}
 
 # GraphQL Queries.
 ANIME_QUERY = """
-query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean) {
-    Media (id: $id, idMal: $idMal, search: $search, type: $type) {
+query ($id: Int, $idMal:Int, $search: String) {
+    Media (id: $id, idMal: $idMal, search: $search, type: ANIME) {
         id
         idMal
         title {
@@ -50,7 +50,7 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
         }
         format
         status
-        description (asHtml: $asHtml)
+        description (asHtml: True)
         startDate {
             year
             month
@@ -94,7 +94,7 @@ query ($id: Int, $idMal:Int, $search: String, $type: MediaType, $asHtml: Boolean
                 image {
                     large
                 }
-                description (asHtml: $asHtml)
+                description (asHtml: True)
                 siteUrl
             }
         }
@@ -240,11 +240,11 @@ async def anim_arch(message: Message):
     if not query:
         await message.err("NameError: 'query' not defined")
         return
-    vars_ = {"search": query, "asHtml": True, "type": "ANIME"}
+    vars_ = {"search": query}
     if query.isdigit():
-        vars_ = {"id": int(query), "asHtml": True, "type": "ANIME"}
+        vars_ = {"id": int(query)}
         if "-mid" in message.flags:
-            vars_ = {"idMal": int(query), "asHtml": True, "type": "ANIME"}
+            vars_ = {"idMal": int(query)}
     result = await get_ani(vars_)
     if len(result)!=1:
         title_img, finals_ = result[0], result[1]
@@ -737,4 +737,73 @@ async def present_res(cq: CallbackQuery):
             btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
     if result[4]==False:
         btns.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
+    if len(cq.data.split("_"))==3:
+        btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{cq.data.split('_')[2]}")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
+
+
+PAGE_QUERY = """
+query ($search: String, $pp: Int) {
+    Page (perPage: $pp) {
+        media (search: $search, type: ANIME) {
+            id
+            title {
+                romaji
+                english
+            }
+            synonyms
+        }
+    }
+}
+"""
+
+@userge.on_cmd(
+    "ani",
+    about={
+        "header": "Advanced Anime Search",
+        "description": "Search for Anime using AniList API",
+        "usage": "{tr}ianime [anime name]",
+        "examples": ["{tr}ianime Asterisk war",]
+    },
+    allow_private=False
+)
+async def ianime(message: Message):
+    k = await userge.bot.get_me()
+    x = await message.reply("`Getting Anime Info`")
+    query = message.input_str
+    get_list = {"search": query, "pp": 10}
+    result = await return_json_senpai(PAGE_QUERY, get_list)
+    data = result["data"]["Page"]["media"]    
+    button = []
+    out = "Possible searches related to `query`"
+    for i in data:
+        lstsnnms = " ".join(i['synonyms']) if i['synonyms']!=[] else ""
+        eng = i['title']['english'] if i['title']['english']!=None else ""
+        rom = i['title']['romaji']
+        str_ = f"{rom} {eng} {lstsnnms}".replace(":", "").replace("-", "")
+        out += f"**{rom}**\n**➤ ID:** `{i['id']}`"
+        if query.lower() in str_.lower():
+            button.append([InlineKeyboardButton(text=f"{i['title']['romaji']}", callback_data=f"btn_{i['id']}_{query}")])
+    if x.from_user.id!=k.id:
+        await message.edit(out)
+        return
+    await message.reply_photo(InputMediaPhoto("https://telegra.ph/file/dc701d4b903fb476c6e06.jpg", f'Showing top results for "{query}":'), reply_markup=InlineKeyboardMarkup(button))
+    await x.delete()
+
+
+@userge.bot.on_callback_query(filters.regex(pattern=r"back_(.*)"))
+@check_owner
+async def present_res(cq: CallbackQuery):
+    query = cq.data.split("_")[1]
+    get_list = {"search": query, "pp": 10}
+    result = await return_json_senpai(PAGE_QUERY, get_list)
+    data = result["data"]["Page"]["media"]    
+    button = []
+    for i in data:
+        lstsnnms = " ".join(i['synonyms']) if i['synonyms']!=[] else ""
+        eng = i['title']['english'] if i['title']['english']!=None else ""
+        rom = i['title']['romaji']
+        str_ = f"{rom} {eng} {lstsnnms}"
+        if query.lower() in str_.lower():
+            button.append([InlineKeyboardButton(text=f"{i['title']['romaji']}", callback_data=f"btn_{i['id']}_{query}")])
+    await cq.edit_message_media(InputMediaPhoto("https://telegra.ph/file/dc701d4b903fb476c6e06.jpg", f'Showing top results for "{query}":'), reply_markup=InlineKeyboardMarkup(button))
