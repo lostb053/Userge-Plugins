@@ -721,20 +721,21 @@ async def present_res(cq: CallbackQuery):
     vars_ = {"id": int(idm), "asHtml": True}
     result = await get_ani(vars_)
     pic, msg = result[0], result[1]
+    qry = f"_{cq.data.split('_')[2]}" if len(cq.data.split("_"))==3 else ""
     btns = []
     if result[2]=="None":
         if result[3]!="None":
-            btns.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")])
+            btns.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{qry}")])
     else:
         if result[3]!="None":
             btns.append(
                 [
-                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}"),
-                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")
+                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{qry}"),
+                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{qry}")
                 ]
             )
         else:
-            btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
+            btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{qry}")])
     if result[4]==False:
         btns.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
     if len(cq.data.split("_"))==3:
@@ -781,7 +782,7 @@ async def ianime(message: Message):
         eng = i['title']['english'] if i['title']['english']!=None else ""
         rom = i['title']['romaji']
         str_ = f"{rom} {eng} {lstsnnms}".replace(":", "").replace("-", "")
-        out += f"**{rom}**\n**➤ ID:** `{i['id']}`"
+        out += f"\n\n**{rom}**\n**➤ ID:** `{i['id']}`"
         if query.lower() in str_.lower():
             button.append([InlineKeyboardButton(text=f"{i['title']['romaji']}", callback_data=f"btn_{i['id']}_{query}")])
     if x.from_user.id!=k.id:
