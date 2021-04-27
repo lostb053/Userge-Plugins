@@ -787,7 +787,7 @@ async def ianime(message: Message):
     if x.from_user.id!=k.id:
         await message.edit(out)
         return
-    await message.reply_photo(InputMediaPhoto("https://telegra.ph/file/dc701d4b903fb476c6e06.jpg", f'Showing top results for "{query}":'), reply_markup=InlineKeyboardMarkup(button))
+    await message.reply_photo("https://telegra.ph/file/dc701d4b903fb476c6e06.jpg", f'Showing top results for "{query}":', reply_markup=InlineKeyboardMarkup(button))
     await x.delete()
 
 
