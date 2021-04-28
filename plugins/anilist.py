@@ -554,7 +554,7 @@ async def ianime(message: Message):
     if x.from_user.id!=k.id:
         await message.edit(out)
         return
-    await message.reply_photo("https://telegra.ph/file/dc701d4b903fb476c6e06.jpg", f'Showing top results for "{query}":', reply_markup=InlineKeyboardMarkup(button))
+    await message.reply_photo(f"https://img.anili.st/media/{data[0]['id']}", f'Showing top results for "{query}":', reply_markup=InlineKeyboardMarkup(button))
     await x.delete()
 
 
@@ -798,4 +798,4 @@ async def present_res(cq: CallbackQuery):
     for i in data:
         rom = i['title']['romaji']
         button.append([InlineKeyboardButton(text=f"{rom}", callback_data=f"btn_{i['id']}_{query}_{lim}")])
-    await cq.edit_message_media(InputMediaPhoto("https://telegra.ph/file/dc701d4b903fb476c6e06.jpg", f'Showing top results for "{query}":'), reply_markup=InlineKeyboardMarkup(button))
+    await cq.edit_message_media(InputMediaPhoto(f"https://img.anili.st/media/{data[0]['id']}", f'Showing top results for "{query}":'), reply_markup=InlineKeyboardMarkup(button))
