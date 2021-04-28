@@ -550,13 +550,9 @@ async def ianime(message: Message):
     button = []
     out = "Possible searches related to `query`"
     for i in data:
-        lstsnnms = " ".join(i['synonyms']) if i['synonyms']!=[] else ""
-        eng = i['title']['english'] if i['title']['english']!=None else ""
         rom = i['title']['romaji']
-        str_ = f"{rom} {eng} {lstsnnms}".replace(":", "").replace("-", "")
         out += f"\n\n**{rom}**\n**➤ ID:** `{i['id']}`"
-        if query.lower() in str_.lower():
-            button.append([InlineKeyboardButton(text=f"{i['title']['romaji']}", callback_data=f"btn_{i['id']}_{query}")])
+        button.append([InlineKeyboardButton(text=f"{i['title']['romaji']}", callback_data=f"btn_{i['id']}_{query}")])
     if x.from_user.id!=k.id:
         await message.edit(out)
         return
