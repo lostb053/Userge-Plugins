@@ -142,6 +142,21 @@ query ($id: Int, $mediaId: Int, $notYetAired: Boolean) {
 }
 """
 
+PAGE_QUERY = """
+query ($search: String, $pp: Int) {
+    Page (perPage: $pp) {
+        media (search: $search, type: ANIME) {
+            id
+            title {
+                romaji
+                english
+            }
+            synonyms
+        }
+    }
+}
+"""
+
 CHARACTER_QUERY = """
 query ($search: String, $asHtml: Boolean) {
   Character (search: $search) {
@@ -515,6 +530,40 @@ async def trace_bek(message: Message):
         await message.delete()
 
 
+@userge.on_cmd(
+    "ani",
+    about={
+        "header": "Advanced Anime Search",
+        "description": "Search for Anime using AniList API",
+        "usage": "{tr}ianime [anime name]",
+        "examples": ["{tr}ianime Asterisk war",]
+    },
+    allow_private=False
+)
+async def ianime(message: Message):
+    k = await userge.bot.get_me()
+    x = await message.reply("`Getting Anime Info`")
+    query = message.input_str
+    get_list = {"search": query, "pp": 10}
+    result = await return_json_senpai(PAGE_QUERY, get_list)
+    data = result["data"]["Page"]["media"]    
+    button = []
+    out = "Possible searches related to `query`"
+    for i in data:
+        lstsnnms = " ".join(i['synonyms']) if i['synonyms']!=[] else ""
+        eng = i['title']['english'] if i['title']['english']!=None else ""
+        rom = i['title']['romaji']
+        str_ = f"{rom} {eng} {lstsnnms}".replace(":", "").replace("-", "")
+        out += f"\n\n**{rom}**\n**➤ ID:** `{i['id']}`"
+        if query.lower() in str_.lower():
+            button.append([InlineKeyboardButton(text=f"{i['title']['romaji']}", callback_data=f"btn_{i['id']}_{query}")])
+    if x.from_user.id!=k.id:
+        await message.edit(out)
+        return
+    await message.reply_photo("https://telegra.ph/file/dc701d4b903fb476c6e06.jpg", f'Showing top results for "{query}":', reply_markup=InlineKeyboardMarkup(button))
+    await x.delete()
+
+
 async def get_ani(vars_):
     result = await return_json_senpai(ANIME_QUERY, vars_)
     error = result.get("errors")
@@ -717,11 +766,12 @@ def pos_no(x):
 @userge.bot.on_callback_query(filters.regex(pattern=r"btn_(.*)"))
 @check_owner
 async def present_res(cq: CallbackQuery):
-    idm = cq.data.split("_")[1]
+    query = cq.data.split("_")
+    idm = query[1]
     vars_ = {"id": int(idm), "asHtml": True}
     result = await get_ani(vars_)
     pic, msg = result[0], result[1]
-    qry = f"_{cq.data.split('_')[2]}" if len(cq.data.split("_"))==3 else ""
+    qry = f"_{query[2]}" if len(query)==3 else ""
     btns = []
     if result[2]=="None":
         if result[3]!="None":
@@ -738,58 +788,9 @@ async def present_res(cq: CallbackQuery):
             btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{qry}")])
     if result[4]==False:
         btns.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
-    if len(cq.data.split("_"))==3:
-        btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{cq.data.split('_')[2]}")])
+    if len(query)==3:
+        btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{query[2]}")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
-
-
-PAGE_QUERY = """
-query ($search: String, $pp: Int) {
-    Page (perPage: $pp) {
-        media (search: $search, type: ANIME) {
-            id
-            title {
-                romaji
-                english
-            }
-            synonyms
-        }
-    }
-}
-"""
-
-@userge.on_cmd(
-    "ani",
-    about={
-        "header": "Advanced Anime Search",
-        "description": "Search for Anime using AniList API",
-        "usage": "{tr}ianime [anime name]",
-        "examples": ["{tr}ianime Asterisk war",]
-    },
-    allow_private=False
-)
-async def ianime(message: Message):
-    k = await userge.bot.get_me()
-    x = await message.reply("`Getting Anime Info`")
-    query = message.input_str
-    get_list = {"search": query, "pp": 10}
-    result = await return_json_senpai(PAGE_QUERY, get_list)
-    data = result["data"]["Page"]["media"]    
-    button = []
-    out = "Possible searches related to `query`"
-    for i in data:
-        lstsnnms = " ".join(i['synonyms']) if i['synonyms']!=[] else ""
-        eng = i['title']['english'] if i['title']['english']!=None else ""
-        rom = i['title']['romaji']
-        str_ = f"{rom} {eng} {lstsnnms}".replace(":", "").replace("-", "")
-        out += f"\n\n**{rom}**\n**➤ ID:** `{i['id']}`"
-        if query.lower() in str_.lower():
-            button.append([InlineKeyboardButton(text=f"{i['title']['romaji']}", callback_data=f"btn_{i['id']}_{query}")])
-    if x.from_user.id!=k.id:
-        await message.edit(out)
-        return
-    await message.reply_photo("https://telegra.ph/file/dc701d4b903fb476c6e06.jpg", f'Showing top results for "{query}":', reply_markup=InlineKeyboardMarkup(button))
-    await x.delete()
 
 
 @userge.bot.on_callback_query(filters.regex(pattern=r"back_(.*)"))
