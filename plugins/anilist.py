@@ -1,19 +1,16 @@
 """ Search for Anime related Info """
 
 # Module Capable of fetching Anime, Airing, Character Info &
-# Anime Reverse Search made for UserGe.
+# Anime Reverse Search made for Userge-X.
 # AniList Api (GitHub: https://github.com/AniList/ApiV2-GraphQL-Docs)
 # Anime Reverse Search Powered by tracemoepy.
 # TraceMoePy (GitHub: https://github.com/DragSama/tracemoepy)
 # (C) Author: Phyco-Ninja (https://github.com/Phyco-Ninja) (@PhycoNinja13b)
 # Tweaked by @LostB053 (on telegram)
 
-import os
-from datetime import datetime
-
+import os, humanize, tracemoepy
 import flag as cflag
-import humanize
-import tracemoepy
+from datetime import datetime
 from aiohttp import ClientSession
 from pyrogram import filters
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
@@ -544,7 +541,8 @@ async def ianime(message: Message):
     k = await userge.bot.get_me()
     x = await message.reply("`Getting Anime Info`")
     query = message.input_str
-    get_list = {"search": query, "pp": 10}
+    lim = min(int(message.flags.get("-l", 10)), 20)
+    get_list = {"search": query, "pp": lim}
     result = await return_json_senpai(PAGE_QUERY, get_list)
     data = result["data"]["Page"]["media"]    
     button = []
@@ -552,7 +550,7 @@ async def ianime(message: Message):
     for i in data:
         rom = i['title']['romaji']
         out += f"\n\n**{rom}**\n**➤ ID:** `{i['id']}`"
-        button.append([InlineKeyboardButton(text=f"{i['title']['romaji']}", callback_data=f"btn_{i['id']}_{query}")])
+        button.append([InlineKeyboardButton(text=f"{rom}", callback_data=f"btn_{i['id']}_{query}_{lim}")])
     if x.from_user.id!=k.id:
         await message.edit(out)
         return
@@ -767,7 +765,7 @@ async def present_res(cq: CallbackQuery):
     vars_ = {"id": int(idm), "asHtml": True}
     result = await get_ani(vars_)
     pic, msg = result[0], result[1]
-    qry = f"_{query[2]}" if len(query)==3 else ""
+    qry = f"_{query[2]}_{query[3]}" if len(query)==4 else ""
     btns = []
     if result[2]=="None":
         if result[3]!="None":
@@ -785,23 +783,19 @@ async def present_res(cq: CallbackQuery):
     if result[4]==False:
         btns.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
     if len(query)==3:
-        btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{query[2]}")])
+        btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{query[2]}_{query[3]}")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
 
 
 @userge.bot.on_callback_query(filters.regex(pattern=r"back_(.*)"))
 @check_owner
 async def present_res(cq: CallbackQuery):
-    query = cq.data.split("_")[1]
-    get_list = {"search": query, "pp": 10}
+    query, lim = cq.data.split("_")
+    get_list = {"search": query, "pp": lim}
     result = await return_json_senpai(PAGE_QUERY, get_list)
     data = result["data"]["Page"]["media"]    
     button = []
     for i in data:
-        lstsnnms = " ".join(i['synonyms']) if i['synonyms']!=[] else ""
-        eng = i['title']['english'] if i['title']['english']!=None else ""
         rom = i['title']['romaji']
-        str_ = f"{rom} {eng} {lstsnnms}"
-        if query.lower() in str_.lower():
-            button.append([InlineKeyboardButton(text=f"{i['title']['romaji']}", callback_data=f"btn_{i['id']}_{query}")])
+        button.append([InlineKeyboardButton(text=f"{rom}", callback_data=f"btn_{i['id']}_{query}_{lim}")])
     await cq.edit_message_media(InputMediaPhoto("https://telegra.ph/file/dc701d4b903fb476c6e06.jpg", f'Showing top results for "{query}":'), reply_markup=InlineKeyboardMarkup(button))
