@@ -782,7 +782,7 @@ async def present_res(cq: CallbackQuery):
             btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{qry}")])
     if result[4]==False:
         btns.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
-    if len(query)==3:
+    if len(query)==4:
         btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{query[2]}_{query[3]}")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
 
