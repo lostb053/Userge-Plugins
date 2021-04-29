@@ -538,8 +538,7 @@ async def trace_bek(message: Message):
     allow_private=False
 )
 async def ianime(message: Message):
-    k = await userge.bot.get_me()
-    x = await message.reply("`Getting Anime Info`")
+    
     query = message.input_str
     lim = min(int(message.flags.get("-l", 10)), 20)
     get_list = {"search": query, "pp": lim}
@@ -551,7 +550,7 @@ async def ianime(message: Message):
         rom = i['title']['romaji']
         out += f"\n\n**{rom}**\n**➤ ID:** `{i['id']}`"
         button.append([InlineKeyboardButton(text=f"{rom}", callback_data=f"btn_{i['id']}_{query}_{lim}")])
-    if x.from_user.id!=k.id:
+    if not message.client.is_bot:
         await message.edit(out)
         return
     await message.reply_photo(f"https://img.anili.st/media/{data[0]['id']}", f'Showing top results for "{query}":', reply_markup=InlineKeyboardMarkup(button))
