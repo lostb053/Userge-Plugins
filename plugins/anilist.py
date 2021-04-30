@@ -290,7 +290,7 @@ async def anim_arch(message: Message):
         url = title_img
         with open("image.png", "wb") as f:
             f.write(await get_response.read(url))
-        await message.reply_photo("image.png", caption=finals_, reply_markup=InlineKeyboardMarkup(buttons))
+        await message.reply_photo("image.png", caption=finals_)
     await message.delete()
 
 
@@ -554,14 +554,7 @@ async def ianime(message: Message):
     if not message.client.is_bot:
         await message.edit(out)
         return
-    try:
-        await message.reply_photo(f"https://img.anili.st/media/{data[0]['id']}", f'Showing top results for "{query}":', reply_markup=InlineKeyboardMarkup(button))
-    except MediaEmpty:
-        url = f"https://img.anili.st/media/{data[0]['id']}"
-        with open("image.png", "wb") as f:
-            f.write(await get_response.read(url))
-        await message.reply_photo("image.png", f'Showing top results for "{query}":', reply_markup=InlineKeyboardMarkup(button))
-
+    await message.reply_photo(f"https://img.anili.st/media/{data[0]['id']}", f'Showing top results for "{query}":', reply_markup=InlineKeyboardMarkup(button))
 
 async def get_info(idm, req):
     vars_ = {"id": int(idm), "asHtml": True}
@@ -817,10 +810,7 @@ async def present_res(cq: CallbackQuery):
     try:
         await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
     except MediaEmpty:
-        url = pic
-        with open("image.png", "wb") as f:
-            f.write(await get_response.read(url))
-        await cq.edit_message_media(InputMediaPhoto("image.png", caption=msg), reply_markup=InlineKeyboardMarkup(btns))
+        cq.answer("Technical Error, please search using anime cmd")
 
 
 @userge.bot.on_callback_query(filters.regex(pattern=r"back_(.*)"))
@@ -834,14 +824,7 @@ async def present_ls(cq: CallbackQuery):
     for i in data:
         rom = i['title']['romaji']
         button.append([InlineKeyboardButton(text=f"{rom}", callback_data=f"btn_{i['id']}_{query}")])
-    try:
-        await cq.edit_message_media(InputMediaPhoto(f"https://img.anili.st/media/{data[0]['id']}", f'Showing top results for "{query}":'), reply_markup=InlineKeyboardMarkup(button))
-    except MediaEmpty:
-        url = f"https://img.anili.st/media/{data[0]['id']}"
-        with open("image.png", "wb") as f:
-            f.write(await get_response.read(url))
-        await cq.edit_message_media(InputMediaPhoto("image.png", f'Showing top results for "{query}":'), reply_markup=InlineKeyboardMarkup(button))
-
+    await cq.edit_message_media(InputMediaPhoto(f"https://img.anili.st/media/{data[0]['id']}", f'Showing top results for "{query}":'), reply_markup=InlineKeyboardMarkup(button))
 
 @userge.bot.on_callback_query(filters.regex(pattern=r"(desc|ls)_(.*)"))
 @check_owner
@@ -855,10 +838,4 @@ async def desc_(cq: CallbackQuery):
         result = result[:950]+"..."
         result += "For more info click back button and open synopsis link"
     button = [[InlineKeyboardButton(text="Back", callback_data=f"btn_{query}{lsqry}")]]
-    try:
-        await cq.edit_message_media(InputMediaPhoto(f"https://img.anili.st/media/{query}", f'{info}:\n\n{result}'), reply_markup=InlineKeyboardMarkup(button))
-    except MediaEmpty:
-        url = f"https://img.anili.st/media/{query}"
-        with open("image.png", "wb") as f:
-            f.write(await get_response.read(url))
-        await cq.edit_message_media(InputMediaPhoto("image.png", f'{info}:\n\n{result}'), reply_markup=InlineKeyboardMarkup(button))
+    await cq.edit_message_media(InputMediaPhoto(f"https://img.anili.st/media/{query}", f'{info}:\n\n{result}'), reply_markup=InlineKeyboardMarkup(button))
