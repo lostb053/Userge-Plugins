@@ -807,11 +807,7 @@ async def present_res(cq: CallbackQuery):
     btns = get_btns(result, qry)
     if len(query)==3:
         btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{query[2]}")])
-    try:
-        await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
-    except MediaEmpty:
-        cq.answer("Technical Error, please search using anime cmd")
-
+    await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
 
 @userge.bot.on_callback_query(filters.regex(pattern=r"back_(.*)"))
 @check_owner
