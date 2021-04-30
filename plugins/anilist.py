@@ -160,7 +160,7 @@ query ($id: Int, $mediaId: Int, $notYetAired: Boolean) {
 
 PAGE_QUERY = """
 query ($search: String) {
-    Page (perPage: 15) {
+    Page (perPage: 10) {
         media (search: $search, type: ANIME) {
             id
             title {
