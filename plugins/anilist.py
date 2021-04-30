@@ -806,7 +806,7 @@ async def present_res(cq: CallbackQuery):
 @userge.bot.on_callback_query(filters.regex(pattern=r"back_(.*)"))
 @check_owner
 async def present_ls(cq: CallbackQuery):
-    kek, query, lim = cq.data.split("_")
+    kek, query = cq.data.split("_")
     get_list = {"search": query}
     result = await return_json_senpai(PAGE_QUERY, get_list)
     data = result["data"]["Page"]["media"]    
