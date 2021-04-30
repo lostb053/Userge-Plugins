@@ -560,7 +560,7 @@ async def get_info(idm, req):
         prqlsql = data.get("relations").get('edges')
         ps = ""
         for i in prqlsql:
-            ps += f'• {i["node"]["title"]["romaji"]} `{i["relationType"]}`'
+            ps += f'• {i["node"]["title"]["romaji"]} `{i["relationType"]}`\n'
         return ps
 
 
@@ -825,8 +825,7 @@ async def desc_(cq: CallbackQuery):
     info = "<b>Description</b>" if kek=="desc" else "<b>Series List</b>"
     if len(q)>2:
         lsqry = q[2]
-    vars_ = {"id": int(query), "asHtml": True}
-    result = await get_info(vars_, kek)
+    result = await get_info(query, kek)
     if len(result)>1000:
         result = result[:950]+"..."
         result += "For more info click back button and open synopsis link"
