@@ -823,11 +823,10 @@ async def desc_(cq: CallbackQuery):
     q = cq.data.split("_")
     kek, query = q[0], q[1]
     info = "<b>Description</b>" if kek=="desc" else "<b>Series List</b>"
-    if len(q)>2:
-        lsqry = q[2]
+    lsqry = f"_{q[2]}" if len(q)>2 else ""
     result = await get_info(query, kek)
     if len(result)>1000:
         result = result[:950]+"..."
         result += "For more info click back button and open synopsis link"
-    button = [[InlineKeyboardButton(text="Back", callback_data=f"btn_{query}_{lsqry}")]]
+    button = [[InlineKeyboardButton(text="Back", callback_data=f"btn_{query}{lsqry}")]]
     await cq.edit_message_media(InputMediaPhoto(f"https://img.anili.st/media/{query}", f'{info}:\n\n{result}'), reply_markup=InlineKeyboardMarkup(button))
