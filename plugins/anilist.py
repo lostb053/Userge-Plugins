@@ -106,6 +106,25 @@ query ($id: Int, $idMal:Int, $search: String, $asHtml: Boolean) {
 }
 """
 
+INFO_QUERY = """
+query ($id: Int, $idMal:Int, $search: String, $asHtml: Boolean) {
+    Media (id: $id, idMal: $idMal, search: $search, type: ANIME) {
+        id
+        description (asHtml: $asHtml)
+        relations {
+            edges {
+                node {
+                    title {
+                        romaji
+                    }
+                }
+                relationType
+            }
+        }
+    }
+}
+"""
+
 AIRING_QUERY = """
 query ($id: Int, $mediaId: Int, $notYetAired: Boolean) {
   Page(page: 1, perPage: 50) {
@@ -140,8 +159,8 @@ query ($id: Int, $mediaId: Int, $notYetAired: Boolean) {
 """
 
 PAGE_QUERY = """
-query ($search: String, $pp: Int) {
-    Page (perPage: $pp) {
+query ($search: String) {
+    Page (perPage: 15) {
         media (search: $search, type: ANIME) {
             id
             title {
@@ -262,31 +281,7 @@ async def anim_arch(message: Message):
         title_img, finals_ = result[0], result[1]
     else:
         return await message.err(result[0])
-    buttons = []
-    if result[2]=="None":
-        if result[3]!="None":
-            buttons.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")])
-        else:
-            if result[4]!=False:
-                await message.reply_photo(title_img, caption=finals_)
-                await message.delete()
-                return
-    else:
-        if result[3]!="None":
-            buttons.append(
-                [
-                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}"),
-                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}")
-                ]
-            )
-        else:
-            buttons.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}")])
-    if result[4]==False:
-        buttons.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
-    if "-wp" in message.flags:
-        finals_ = f"[\u200b]({title_img}) {finals_}"
-        await message.edit(finals_)
-        return
+    buttons = get_btns(result, "")
     await message.reply_photo(title_img, caption=finals_, reply_markup=InlineKeyboardMarkup(buttons))
     await message.delete()
 
@@ -538,10 +533,8 @@ async def trace_bek(message: Message):
     allow_private=False
 )
 async def ianime(message: Message):
-    
     query = message.input_str
-    lim = min(int(message.flags.get("-l", 10)), 20)
-    get_list = {"search": query, "pp": lim}
+    get_list = {"search": query}
     result = await return_json_senpai(PAGE_QUERY, get_list)
     data = result["data"]["Page"]["media"]    
     button = []
@@ -549,12 +542,26 @@ async def ianime(message: Message):
     for i in data:
         rom = i['title']['romaji']
         out += f"\n\n**{rom}**\n**➤ ID:** `{i['id']}`"
-        button.append([InlineKeyboardButton(text=f"{rom}", callback_data=f"btn_{i['id']}_{query}_{lim}")])
+        button.append([InlineKeyboardButton(text=f"{rom}", callback_data=f"btn_{i['id']}_{query}")])
     if not message.client.is_bot:
         await message.edit(out)
         return
     await message.reply_photo(f"https://img.anili.st/media/{data[0]['id']}", f'Showing top results for "{query}":', reply_markup=InlineKeyboardMarkup(button))
-    await x.delete()
+
+
+async def get_info(idm, req):
+    vars_ = {"id": int(idm), "asHtml": True}
+    result = await return_json_senpai(INFO_QUERY, vars_)
+    data = result["data"]["Media"]
+    if req=="desc":
+        synopsis = data.get("description")
+        return synopsis
+    else:
+        prqlsql = data.get("relations").get('edges')
+        ps = ""
+        for i in prqlsql:
+            ps += f'• {i["node"]["title"]["romaji"]} `{i["relationType"]}`'
+        return ps
 
 
 async def get_ani(vars_):
@@ -676,7 +683,7 @@ async def get_ani(vars_):
         finals_ = ANIME_TEMPLATE.format(**locals())
     except KeyError as kys:
         return [f"{kys}"]
-    return title_img, finals_, prql_id, sql_id, adult, romaji
+    return title_img, finals_, prql_id, sql_id, adult, romaji, idm
 
 
 async def get_char(var):
@@ -756,6 +763,31 @@ def pos_no(x):
     return th
 
 
+def get_btns(result: list, lsqry):
+    buttons = []
+    qry = f"_{lsqry}" if lsqry!="" else ""
+    if result[2]=="None":
+        if result[3]!="None":
+            buttons.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{qry}")])
+    else:
+        if result[3]!="None":
+            buttons.append(
+                [
+                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{qry}"),
+                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{qry}")
+                ]
+            )
+        else:
+            buttons.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{qry}")])
+    btn = []
+    btn.append(InlineKeyboardButton(text="Description", callback_data=f"desc_{result[6]}{qry}"))
+    if result[4]==False:
+        btn.append(InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}"))
+    btn.append(InlineKeyboardButton(text="List Series", callback_data=f"ls_{result[6]}{qry}"))
+    buttons.append(btn)
+    return buttons
+
+
 @userge.bot.on_callback_query(filters.regex(pattern=r"btn_(.*)"))
 @check_owner
 async def present_res(cq: CallbackQuery):
@@ -764,37 +796,39 @@ async def present_res(cq: CallbackQuery):
     vars_ = {"id": int(idm), "asHtml": True}
     result = await get_ani(vars_)
     pic, msg = result[0], result[1]
-    qry = f"_{query[2]}_{query[3]}" if len(query)==4 else ""
-    btns = []
-    if result[2]=="None":
-        if result[3]!="None":
-            btns.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{qry}")])
-    else:
-        if result[3]!="None":
-            btns.append(
-                [
-                    InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{qry}"),
-                    InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{qry}")
-                ]
-            )
-        else:
-            btns.append([InlineKeyboardButton(text="Prequel", callback_data=f"btn_{result[2]}{qry}")])
-    if result[4]==False:
-        btns.append([InlineKeyboardButton(text="Download", switch_inline_query_current_chat=f"anime {result[5]}")])
-    if len(query)==4:
-        btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{query[2]}_{query[3]}")])
+    qry = f"_{query[2]}" if len(query)==3 else ""
+    btns = get_btns(result, qry)
+    if len(query)==3:
+        btns.append([InlineKeyboardButton(text="Back", callback_data=f"back_{query[2]}")])
     await cq.edit_message_media(InputMediaPhoto(pic, caption=msg), reply_markup=InlineKeyboardMarkup(btns))
 
 
 @userge.bot.on_callback_query(filters.regex(pattern=r"back_(.*)"))
 @check_owner
-async def present_res(cq: CallbackQuery):
+async def present_ls(cq: CallbackQuery):
     kek, query, lim = cq.data.split("_")
-    get_list = {"search": query, "pp": lim}
+    get_list = {"search": query}
     result = await return_json_senpai(PAGE_QUERY, get_list)
     data = result["data"]["Page"]["media"]    
     button = []
     for i in data:
         rom = i['title']['romaji']
-        button.append([InlineKeyboardButton(text=f"{rom}", callback_data=f"btn_{i['id']}_{query}_{lim}")])
+        button.append([InlineKeyboardButton(text=f"{rom}", callback_data=f"btn_{i['id']}_{query}")])
     await cq.edit_message_media(InputMediaPhoto(f"https://img.anili.st/media/{data[0]['id']}", f'Showing top results for "{query}":'), reply_markup=InlineKeyboardMarkup(button))
+
+
+@userge.bot.on_callback_query(filters.regex(pattern=r"(desc|ls)_(.*)"))
+@check_owner
+async def desc_(cq: CallbackQuery):
+    q = cq.data.split("_")
+    kek, query = q[0], q[1]
+    info = "<b>Description</b>" if kek=="desc" else "<b>Series List</b>"
+    if len(q)>2:
+        lsqry = q[2]
+    vars_ = {"id": int(query), "asHtml": True}
+    result = await get_info(vars_, kek)
+    if len(result)>1000:
+        result = result[:950]+"..."
+        result += "For more info click back button and open synopsis link"
+    button = [[InlineKeyboardButton(text="Back", callback_data=f"btn_{query}_{lsqry}")]]
+    await cq.edit_message_media(InputMediaPhoto(f"https://img.anili.st/media/{query}", f'{info}:\n\n{result}'), reply_markup=InlineKeyboardMarkup(button))
