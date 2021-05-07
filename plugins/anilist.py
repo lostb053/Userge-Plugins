@@ -772,7 +772,7 @@ def pos_no(x):
 
 def get_btns(result: list, lsqry):
     buttons = []
-    qry = f"_{lsqry}" if lsqry!="" else ""
+    qry = lsqry if lsqry!="" else ""
     if result[2]=="None":
         if result[3]!="None":
             buttons.append([InlineKeyboardButton(text="Sequel", callback_data=f"btn_{result[3]}{qry}")])
